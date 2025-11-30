@@ -1,6 +1,6 @@
 # OSO DevOps Homebrew Tap
 
-This is the official Homebrew tap for OSO DevOps tools.
+This is the official Homebrew tap for OSO tools.
 
 ## Installation
 
