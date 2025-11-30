@@ -1,4 +1,4 @@
-# OSO DevOps Homebrew Tap
+# OSO Homebrew Tap
 
 This is the official Homebrew tap for OSO tools.
 
