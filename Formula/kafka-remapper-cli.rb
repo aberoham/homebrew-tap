@@ -1,20 +1,20 @@
 class KafkaRemapperCli < Formula
   desc "CLI for Kafka partition remapping proxy"
   homepage "https://github.com/osodevops/kafka-partition-remapper"
-  version "0.5.2"
+  version "0.5.3"
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/kafka-partition-remapper/releases/download/v0.5.2/kafka-remapper-cli-aarch64-apple-darwin.tar.xz"
-      sha256 "b2424880339ec00736562dfc2f129d03c42ca35215e3c564d5ffab909133d85c"
+      url "https://github.com/osodevops/kafka-partition-remapper/releases/download/v0.5.3/kafka-remapper-cli-aarch64-apple-darwin.tar.xz"
+      sha256 "8e8b30e0dea285e50efc8c5d512ae9107f9dcfb5ac26e74cdf190a8742d6c2e7"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/osodevops/kafka-partition-remapper/releases/download/v0.5.2/kafka-remapper-cli-x86_64-apple-darwin.tar.xz"
-      sha256 "c6a0db61d41ada4dea6028471eeec01a2d0a59be6e609e7357cad10b256374d3"
+      url "https://github.com/osodevops/kafka-partition-remapper/releases/download/v0.5.3/kafka-remapper-cli-x86_64-apple-darwin.tar.xz"
+      sha256 "92b4e006932d4193dd9b2cce82f7fb0b3429514e1d0e90a58237de669d7d8afa"
     end
   end
   if OS.linux? && Hardware::CPU.intel?
-    url "https://github.com/osodevops/kafka-partition-remapper/releases/download/v0.5.2/kafka-remapper-cli-x86_64-unknown-linux-gnu.tar.xz"
-    sha256 "cf75f6054d4ade84f8f3309db89e07e9bc295e775843325eeef613787bce2b3a"
+    url "https://github.com/osodevops/kafka-partition-remapper/releases/download/v0.5.3/kafka-remapper-cli-x86_64-unknown-linux-gnu.tar.xz"
+    sha256 "8c8e112e08d336ac1769033b15a6c976f9ef525e1fb186e06570bcf43c8a4f3b"
   end
   license "Apache-2.0"
 
