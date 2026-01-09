@@ -5,16 +5,16 @@ class K2i < Formula
   if OS.mac?
     if Hardware::CPU.arm?
       url "https://github.com/osodevops/k2i/releases/download/v0.1.0/k2i-cli-aarch64-apple-darwin.tar.xz"
-      sha256 "a6e29c0840a8b643faa944d6d3dc46700a5891409c91da1d66f5e9a51d0dd742"
+      sha256 "a732005d0edd4ae3512e805685119bc99824e3f7ff2950578acac2cb03db8d8f"
     end
     if Hardware::CPU.intel?
       url "https://github.com/osodevops/k2i/releases/download/v0.1.0/k2i-cli-x86_64-apple-darwin.tar.xz"
-      sha256 "fe43704b755c48cc315c52209cbcde4b9b6a2d85aa6bb3e81fddd177833a1cc4"
+      sha256 "040decef23c252376b84b9d80bf2ae53ab1bef4dd0b1e8a71c14c1cf0155a4bb"
     end
   end
   if OS.linux? && Hardware::CPU.intel?
       url "https://github.com/osodevops/k2i/releases/download/v0.1.0/k2i-cli-x86_64-unknown-linux-gnu.tar.xz"
-      sha256 "3e5ea4411332399914c2fe359e2636425ac729b836ad8dd83cd6b17b215b8601"
+      sha256 "a6c1c0cb644844c7ce6860c31ebd40c5751eb928e9adbc28ea001948e4a6a2b7"
   end
   license "Apache-2.0"
 
