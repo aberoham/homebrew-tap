@@ -1,13 +1,13 @@
 class XeroCli < Formula
   desc "A fast, intelligent CLI for the Xero Accounting API"
   homepage "https://github.com/osodevops/xero-cli"
-  version "0.3.0"
+  version "0.4.0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/xero-cli/releases/download/v0.3.0/xero-aarch64-apple-darwin.tar.gz"
-      sha256 "794a11f66e94bf06a8879755df762ea72ae77273398504657b9bc13098b02c3e"
+      url "https://github.com/osodevops/xero-cli/archive/refs/tags/v0.4.0.tar.gz"
+      sha256 "2952b0bc7fe30cfff031cbc2ce15e29cf520642d305d45fa8c972781b7c8e79b"
     else
       url "https://github.com/osodevops/xero-cli/releases/download/v0.3.0/xero-x86_64-apple-darwin.tar.gz"
       sha256 "23464759e52ee20fecac6c85a86d802f14522a7658b5bfc6ac9600d364756c1d"
