@@ -1,22 +1,22 @@
 class Pplx < Formula
   desc "A fast Perplexity API CLI built in Rust"
   homepage "https://github.com/osodevops/perplexity-cli"
-  version "0.3.1"
+  version "0.3.2"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/perplexity-cli/archive/refs/tags/v0.3.1.tar.gz"
-      sha256 "c7c38317b35e82a1672fdb3017ea705d37006706ba3d7355a5dd047db32bde62"
+      url "https://github.com/osodevops/perplexity-cli/releases/download/v0.3.2/pplx-aarch64-apple-darwin.tar.gz"
+      sha256 "d297b5c36c305d648941458297a284dfa23517e77624b59ea9fecc9693f8ff8e"
     else
-      url "https://github.com/osodevops/perplexity-cli/releases/download/v#{version}/pplx-x86_64-apple-darwin.tar.gz"
-      sha256 "69f2c54d71dd7799280ba7e7f791e9a04af6c5235e23924e801336ccc71babb5"
+      url "https://github.com/osodevops/perplexity-cli/releases/download/v0.3.2/pplx-x86_64-apple-darwin.tar.gz"
+      sha256 "0667dd97ab0da7315a9ad5423a325bc8247db798b628b8f955dac57160cf59c9"
     end
   end
 
   on_linux do
-    url "https://github.com/osodevops/perplexity-cli/releases/download/v#{version}/pplx-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "28a1299659903b3305145a40b509b59cfee23f8888f74d9bd9d15fd9b5cf4f9b"
+    url "https://github.com/osodevops/perplexity-cli/releases/download/v0.3.2/pplx-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "9f557e855d3ae2cce33b7d5a6fd2fc069e48a4082f9e1aad9a6cdf3a19901863"
   end
 
   def install
