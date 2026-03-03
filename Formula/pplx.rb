@@ -1,13 +1,13 @@
 class Pplx < Formula
   desc "A fast Perplexity API CLI built in Rust"
   homepage "https://github.com/osodevops/perplexity-cli"
-  version "0.3.0"
+  version "0.3.1"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/perplexity-cli/archive/refs/tags/v0.3.0.tar.gz"
-      sha256 "e5c1ed1c94b94e1ab27e43c7c21c219d98604c47561009157b59e7b5b060d6f9"
+      url "https://github.com/osodevops/perplexity-cli/archive/refs/tags/v0.3.1.tar.gz"
+      sha256 "c7c38317b35e82a1672fdb3017ea705d37006706ba3d7355a5dd047db32bde62"
     else
       url "https://github.com/osodevops/perplexity-cli/releases/download/v#{version}/pplx-x86_64-apple-darwin.tar.gz"
       sha256 "69f2c54d71dd7799280ba7e7f791e9a04af6c5235e23924e801336ccc71babb5"
