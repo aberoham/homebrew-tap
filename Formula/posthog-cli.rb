@@ -1,0 +1,58 @@
+class PosthogCli < Formula
+  desc "Agent-first CLI for the PostHog analytics API"
+  homepage "https://github.com/osodevops/posthog-cli"
+  version "0.5.0"
+  if OS.mac?
+    if Hardware::CPU.arm?
+      url "https://github.com/osodevops/posthog-cli/releases/download/v0.5.0/posthog-cli-aarch64-apple-darwin.tar.xz"
+      sha256 "abbac8bbd0f63f200ffc1ab90f30a45b39a03b423c888da668b90c06c3e5de1e"
+    end
+    if Hardware::CPU.intel?
+      url "https://github.com/osodevops/posthog-cli/releases/download/v0.5.0/posthog-cli-x86_64-apple-darwin.tar.xz"
+      sha256 "f29b296410fa0766445c8e7b76270d89b3b17fcdb8b2ddbe923d56f6391fc039"
+    end
+  end
+  if OS.linux? && Hardware::CPU.intel?
+      url "https://github.com/osodevops/posthog-cli/releases/download/v0.5.0/posthog-cli-x86_64-unknown-linux-gnu.tar.xz"
+      sha256 "d7b6e208c4121e0fa5177f69945c62b9c093982fa35e94a01820a14ed8851416"
+  end
+  license "MIT"
+
+  BINARY_ALIASES = {
+    "aarch64-apple-darwin":     {},
+    "x86_64-apple-darwin":      {},
+    "x86_64-pc-windows-gnu":    {},
+    "x86_64-unknown-linux-gnu": {},
+  }.freeze
+
+  def target_triple
+    cpu = Hardware::CPU.arm? ? "aarch64" : "x86_64"
+    os = OS.mac? ? "apple-darwin" : "unknown-linux-gnu"
+
+    "#{cpu}-#{os}"
+  end
+
+  def install_binary_aliases!
+    BINARY_ALIASES[target_triple.to_sym].each do |source, dests|
+      dests.each do |dest|
+        bin.install_symlink bin/source.to_s => dest
+      end
+    end
+  end
+
+  def install
+    bin.install "posthog" if OS.mac? && Hardware::CPU.arm?
+    bin.install "posthog" if OS.mac? && Hardware::CPU.intel?
+    bin.install "posthog" if OS.linux? && Hardware::CPU.intel?
+
+    install_binary_aliases!
+
+    # Homebrew will automatically install these, so we don't need to do that
+    doc_files = Dir["README.*", "readme.*", "LICENSE", "LICENSE.*", "CHANGELOG.*"]
+    leftover_contents = Dir["*"] - doc_files
+
+    # Install any leftover files in pkgshare; these are probably config or
+    # sample files.
+    pkgshare.install(*leftover_contents) unless leftover_contents.empty?
+  end
+end
