@@ -1,20 +1,20 @@
 class PosthogCli < Formula
   desc "Agent-first CLI for the PostHog analytics API"
   homepage "https://github.com/osodevops/posthog-cli"
-  version "0.8.0"
+  version "0.10.0"
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/posthog-cli/releases/download/v0.8.0/posthog-cli-aarch64-apple-darwin.tar.xz"
-      sha256 "fd0cb5c898926a2f258893b6459fdf6995b6e91aff93c58011eb4310f811b344"
+      url "https://github.com/osodevops/posthog-cli/releases/download/v0.10.0/posthog-cli-aarch64-apple-darwin.tar.xz"
+      sha256 "d85c0b728d468869350e054f6ca906f25668c97a7a2d64d63d34738c22b15a9f"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/osodevops/posthog-cli/releases/download/v0.8.0/posthog-cli-x86_64-apple-darwin.tar.xz"
-      sha256 "db916fb2feee7ab58269e3a8bcf99ead9d5ebc6df820ab7e3cb77b250ecda914"
+      url "https://github.com/osodevops/posthog-cli/releases/download/v0.10.0/posthog-cli-x86_64-apple-darwin.tar.xz"
+      sha256 "64b8e23b0666685f0a4d28a24bc2787be435cf64d47b298dfeb1be848bec858b"
     end
   end
   if OS.linux? && Hardware::CPU.intel?
-      url "https://github.com/osodevops/posthog-cli/releases/download/v0.8.0/posthog-cli-x86_64-unknown-linux-gnu.tar.xz"
-      sha256 "e197951f62faa4d1bcc25d73b12b360c5d7bb96cddde625398b7b690df7e9d00"
+      url "https://github.com/osodevops/posthog-cli/releases/download/v0.10.0/posthog-cli-x86_64-unknown-linux-gnu.tar.xz"
+      sha256 "67bf96e6ffd4ac71b47d87ed56bde66215fecaff83ab4506f3bfabc41d9d2eb5"
   end
   license "MIT"
 
