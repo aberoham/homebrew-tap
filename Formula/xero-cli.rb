@@ -1,22 +1,22 @@
 class XeroCli < Formula
   desc "A fast, intelligent command-line interface for the Xero Accounting API"
   homepage "https://github.com/osodevops/xero-cli"
-  version "0.4.1"
+  version "0.5.0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/xero-cli/releases/download/v0.4.1/xero-aarch64-apple-darwin.tar.gz"
-      sha256 "cd28da1b2e0fa99c6e8aee13a99de5bf057a9e3923444f6eca3c144ee115d43e"
+      url "https://github.com/osodevops/xero-cli/releases/download/v0.5.0/xero-aarch64-apple-darwin.tar.gz"
+      sha256 "8c9fb2f70b35767c08d7d758aa11a81ac53472d8af7d78b25a9f0ee7a76d9706"
     else
-      url "https://github.com/osodevops/xero-cli/releases/download/v0.4.1/xero-x86_64-apple-darwin.tar.gz"
-      sha256 "5012dbbad46442f94172454cb13020bc98d707e39f15af1a75cfec7bfa6d6c22"
+      url "https://github.com/osodevops/xero-cli/releases/download/v0.5.0/xero-x86_64-apple-darwin.tar.gz"
+      sha256 "21c82be5c321981c064c4a21c85a0d68c3235dfe808636465242b9e06e2b5dc0"
     end
   end
 
   on_linux do
-    url "https://github.com/osodevops/xero-cli/releases/download/v0.4.1/xero-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "0618a0469d41345c0df09eed41e2002a68a5a8ce79bbd31bb052f6113c1ba4b8"
+    url "https://github.com/osodevops/xero-cli/releases/download/v0.5.0/xero-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "b9675217b7d0c2c53f90f345aff9229eea41ea5416236e8393d107f5d9fadb84"
   end
 
   def install
