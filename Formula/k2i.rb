@@ -1,7 +1,6 @@
 class K2i < Formula
   desc "CLI tool for Kafka to Iceberg streaming ingestion"
   homepage "https://github.com/osodevops/k2i"
-  version "0.2.0"
   if OS.mac?
     if Hardware::CPU.arm?
       url "https://github.com/osodevops/k2i/releases/download/v0.2.0/k2i-cli-aarch64-apple-darwin.tar.xz"
@@ -53,5 +52,9 @@ class K2i < Formula
     # Install any leftover files in pkgshare; these are probably config or
     # sample files.
     pkgshare.install(*leftover_contents) unless leftover_contents.empty?
+  end
+
+  test do
+    assert_match "k2i", shell_output("#{bin}/k2i --help")
   end
 end
