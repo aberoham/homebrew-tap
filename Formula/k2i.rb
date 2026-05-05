@@ -1,20 +1,20 @@
 class K2i < Formula
   desc "CLI tool for Kafka to Iceberg streaming ingestion"
   homepage "https://github.com/osodevops/k2i"
-  version "0.1.1"
+  version "0.2.0"
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/k2i/releases/download/v0.1.1/k2i-cli-aarch64-apple-darwin.tar.xz"
-      sha256 "a67f5558932ba3d2dedacc02ce745e6d16a67819dda904d28f9461d59fc03636"
+      url "https://github.com/osodevops/k2i/releases/download/v0.2.0/k2i-cli-aarch64-apple-darwin.tar.xz"
+      sha256 "6bb15286eced7fc683d1e285469003681e7237a11eb69fcd7646cec52fe9c982"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/osodevops/k2i/releases/download/v0.1.1/k2i-cli-x86_64-apple-darwin.tar.xz"
-      sha256 "5898b452b5c21b53dde1a289f42a5de7cb0c849808cdab05731fab44c33d625e"
+      url "https://github.com/osodevops/k2i/releases/download/v0.2.0/k2i-cli-x86_64-apple-darwin.tar.xz"
+      sha256 "914e355860e9c1847a45daef473b42394ec8859f031fee272601d9fd297f2089"
     end
   end
   if OS.linux? && Hardware::CPU.intel?
-      url "https://github.com/osodevops/k2i/releases/download/v0.1.1/k2i-cli-x86_64-unknown-linux-gnu.tar.xz"
-      sha256 "0446de6438a0e889fa1b7f0dde2b7ee80b9bf8e9561a4c6fbdc6e4b4286e5416"
+    url "https://github.com/osodevops/k2i/releases/download/v0.2.0/k2i-cli-x86_64-unknown-linux-gnu.tar.xz"
+    sha256 "acdf6f77407d3440da71ab409e91c84dacb3dda4e164ee9bd9ec346e1fd94af8"
   end
   license "Apache-2.0"
 
