@@ -1,22 +1,22 @@
 class Keito < Formula
   desc "CLI for AI agents and humans to track billable time against Keito"
   homepage "https://github.com/osodevops/keito-cli"
-  version "0.1.2"
+  version "0.1.3"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/keito-cli/releases/download/v0.1.2/keito-aarch64-apple-darwin.tar.gz"
-      sha256 "63332c15b746caea47c4d3403e4f23e235c17d7683a941093017e7563e437ce6"
+      url "https://github.com/osodevops/keito-cli/releases/download/v0.1.3/keito-aarch64-apple-darwin.tar.gz"
+      sha256 "b79aecd3e81e127adda24a3d1a22b6fca84542104254d5b87f73b7eea3ee8577"
     else
-      url "https://github.com/osodevops/keito-cli/releases/download/v0.1.2/keito-x86_64-apple-darwin.tar.gz"
-      sha256 "3acbb43c219b9c8a838bcb19d0fc656f3e12b07ca36266b41b2a6e52d45e2212"
+      url "https://github.com/osodevops/keito-cli/releases/download/v0.1.3/keito-x86_64-apple-darwin.tar.gz"
+      sha256 "e998dbbceecfe6b20f5470efffab6aa690fe864073fdd9da0e57b8080a6bf23b"
     end
   end
 
   on_linux do
-    url "https://github.com/osodevops/keito-cli/releases/download/v0.1.2/keito-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "8da609ec0f0a69dc3f7506bbfc6bfc9fa62c5fcbabde7a8461502fb763caddb4"
+    url "https://github.com/osodevops/keito-cli/releases/download/v0.1.3/keito-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "66c0ac847980590aade4346cf36176de3d44024c3756c5dc541c93d5ad6cdb2b"
   end
 
   def install
@@ -24,6 +24,6 @@ class Keito < Formula
   end
 
   test do
-    assert_match "keito-cli #{version}", shell_output("#{bin}/keito --version")
+    assert_match "keito #{version}", shell_output("#{bin}/keito --version")
   end
 end
