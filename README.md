@@ -7,6 +7,7 @@ This is the official Homebrew tap for OSO tools.
 ```bash
 brew tap osodevops/tap
 brew install kafka-backup
+brew install teams-cli
 ```
 
 ## Available Formulas
@@ -14,12 +15,13 @@ brew install kafka-backup
 | Formula | Description |
 |---------|-------------|
 | kafka-backup | High-performance Kafka backup and restore tool with PITR support |
+| teams-cli | Microsoft Teams CLI for AI agents and automation |
 
 ## Updating
 
 ```bash
 brew update
-brew upgrade kafka-backup
+brew upgrade kafka-backup teams-cli
 ```
 
 ## License
