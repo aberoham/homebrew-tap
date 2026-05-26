@@ -1,6 +1,6 @@
 class TeamsCli < Formula
   desc "Microsoft Teams CLI for AI agents and automation"
-  homepage "https://github.com/osodevops/ms-teams-cli"
+  homepage "http://msteamscli.com/"
   version "0.2.3"
   license "MIT"
 
