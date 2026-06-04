@@ -1,28 +1,27 @@
 class TeamsCli < Formula
   desc "Microsoft Teams CLI for AI agents and automation"
   homepage "http://msteamscli.com/"
-  version "0.2.3"
   license "MIT"
 
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/ms-teams-cli/releases/download/v0.2.3/teams-v0.2.3-aarch64-apple-darwin.tar.gz"
-      sha256 "55812508c22f0319f2ca5c059678196892d1ba3cc7e655fa21166ac035eb48a2"
+      url "https://github.com/osodevops/ms-teams-cli/releases/download/v0.2.4/teams-v0.2.4-aarch64-apple-darwin.tar.gz"
+      sha256 "0d734a32f6d06550893f6b67e93b283a24f59532070af4f5288866d7d5505248"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/osodevops/ms-teams-cli/releases/download/v0.2.3/teams-v0.2.3-x86_64-apple-darwin.tar.gz"
-      sha256 "ddecb523958b84a3a10621d6b96667f0c44bac6f75667e6de37b1b223f39a940"
+      url "https://github.com/osodevops/ms-teams-cli/releases/download/v0.2.4/teams-v0.2.4-x86_64-apple-darwin.tar.gz"
+      sha256 "dffa5da20444bfa33fc240021c8dbad312665acc41a0a71409cd0226af88274e"
     end
   end
 
   if OS.linux?
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/ms-teams-cli/releases/download/v0.2.3/teams-v0.2.3-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "566612398570dc722a3cb185d24858ed4f935a0d12f22537faa0afcf121452cc"
+      url "https://github.com/osodevops/ms-teams-cli/releases/download/v0.2.4/teams-v0.2.4-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "f0b3712f10a500df7204462f9025473b23986cc66d821d29ffd77479c9c9593b"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/osodevops/ms-teams-cli/releases/download/v0.2.3/teams-v0.2.3-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "cbb8f5480a7e99cdfd621712999c2a843bc06ab57b6b212dbcc3439a6788dcd0"
+      url "https://github.com/osodevops/ms-teams-cli/releases/download/v0.2.4/teams-v0.2.4-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "6e5937d8877ea396b4042ba83e3fe34db5fc3f8df85c6bce1c6b30a80f649935"
     end
   end
 
