@@ -1,22 +1,22 @@
 class Semrush < Formula
   desc "A high-performance CLI for the Semrush API built in Rust"
   homepage "https://github.com/osodevops/semrush-cli"
-  version "0.1.1"
+  version "0.1.2"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/semrush-cli/releases/download/v0.1.1/semrush-aarch64-apple-darwin.tar.gz"
-      sha256 "c09d091902430184a30c7f765ccfd94316232287353d2a2e7d01491c4a7e7eda"
+      url "https://github.com/osodevops/semrush-cli/releases/download/v0.1.2/semrush-aarch64-apple-darwin.tar.gz"
+      sha256 "debf59a2bc47acff9dd7efe5756a91cf389ee98b49dbc43269aea1e20230091c"
     else
-      url "https://github.com/osodevops/semrush-cli/releases/download/v0.1.1/semrush-x86_64-apple-darwin.tar.gz"
-      sha256 "38191a7b90f97f621ae424adb443675157e15c60a431c9c43e59ce5781d9d311"
+      url "https://github.com/osodevops/semrush-cli/releases/download/v0.1.2/semrush-x86_64-apple-darwin.tar.gz"
+      sha256 "7bfd442c632cee4b06fd7f0a31bd57682c638726be1178da47e496c252a6c8dc"
     end
   end
 
   on_linux do
-    url "https://github.com/osodevops/semrush-cli/releases/download/v0.1.1/semrush-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "fd15e33e4367a1862a1c3f23591506e4754d597d3ef7eca61ae13ec1bd1290a8"
+    url "https://github.com/osodevops/semrush-cli/releases/download/v0.1.2/semrush-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "989cc9e5f6cb000cac54c70cef95683026091855e789124e84e2e05a1e7b6f9e"
   end
 
   def install
