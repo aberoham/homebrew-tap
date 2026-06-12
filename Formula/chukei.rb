@@ -5,16 +5,16 @@ class Chukei < Formula
   if OS.mac?
     if Hardware::CPU.arm?
       url "https://github.com/osodevops/chukei/releases/download/v0.2.1/chukei-cli-aarch64-apple-darwin.tar.xz"
-      sha256 "3e0a24806dbc88dc90934ee00b0fa398ee8f2447e0bc07d3efb39f320e00d077"
+      sha256 "c4c2d26f25f1f4a9ab78d497d7a78d8170d9b87a3c871dd25dffbf9d7ec4f003"
     end
     if Hardware::CPU.intel?
       url "https://github.com/osodevops/chukei/releases/download/v0.2.1/chukei-cli-x86_64-apple-darwin.tar.xz"
-      sha256 "08f6108d6173ed2a22636d03c4381447f423628d90ef3a03c72bf2d3a1081b27"
+      sha256 "fe09faf353c20d024edd201f1309dd7f3a7adf289fbbc4412a67fe9b01265b54"
     end
   end
   if OS.linux? && Hardware::CPU.intel?
     url "https://github.com/osodevops/chukei/releases/download/v0.2.1/chukei-cli-x86_64-unknown-linux-gnu.tar.xz"
-    sha256 "bdb914af6cf1f226ab5be350fde6f9d80d556eaffc51d49ab0abe5881906c4af"
+    sha256 "24c09c121b67f616779c4cb707574f70cd6fa0f4a2e64482553252c2b275a3a6"
   end
   license "MIT"
 
