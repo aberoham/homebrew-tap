@@ -1,20 +1,20 @@
 class Chukei < Formula
-  desc "Open-source, transparent Snowflake/Databricks query proxy"
+  desc "Open-source cost optimization engine for Snowflake — verified caching, auto-suspend, SQL rewriting, attribution; deploys as a transparent proxy"
   homepage "https://chukei.dev"
-  version "0.1.0"
+  version "0.2.1"
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/osodevops/chukei/releases/download/v0.1.0/chukei-cli-aarch64-apple-darwin.tar.xz"
-      sha256 "623530d81cc15e3ef885ab9308f1ce54d7e61d08987365f2992641ac85a7e197"
+      url "https://github.com/osodevops/chukei/releases/download/v0.2.1/chukei-cli-aarch64-apple-darwin.tar.xz"
+      sha256 "3e0a24806dbc88dc90934ee00b0fa398ee8f2447e0bc07d3efb39f320e00d077"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/osodevops/chukei/releases/download/v0.1.0/chukei-cli-x86_64-apple-darwin.tar.xz"
-      sha256 "8dd665fae5ef65651ac3cb38b4b5a7388eac26e5939e9109af099afb98113284"
+      url "https://github.com/osodevops/chukei/releases/download/v0.2.1/chukei-cli-x86_64-apple-darwin.tar.xz"
+      sha256 "08f6108d6173ed2a22636d03c4381447f423628d90ef3a03c72bf2d3a1081b27"
     end
   end
   if OS.linux? && Hardware::CPU.intel?
-    url "https://github.com/osodevops/chukei/releases/download/v0.1.0/chukei-cli-x86_64-unknown-linux-gnu.tar.xz"
-    sha256 "304583c68208982428c320f69fefd8302de3e8b3d988ece217c212df2cab943d"
+    url "https://github.com/osodevops/chukei/releases/download/v0.2.1/chukei-cli-x86_64-unknown-linux-gnu.tar.xz"
+    sha256 "bdb914af6cf1f226ab5be350fde6f9d80d556eaffc51d49ab0abe5881906c4af"
   end
   license "MIT"
 
