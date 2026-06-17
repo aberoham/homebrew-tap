@@ -1,5 +1,5 @@
 class Chukei < Formula
-  desc "Open source cost optimization engine for Snowflake — verified caching, auto-suspend, SQL rewriting, attribution; deploys as a transparent proxy"
+  desc "Snowflake cost optimization proxy with verified caching"
   homepage "https://chukei.dev"
   version "0.2.3"
   if OS.mac?
