@@ -6,6 +6,7 @@ This is the official Homebrew tap for OSO tools.
 
 ```bash
 brew tap osodevops/tap
+brew install chukei
 brew install kafka-backup
 brew install teams-cli
 ```
@@ -14,6 +15,7 @@ brew install teams-cli
 
 | Formula | Description |
 |---------|-------------|
+| chukei | Apache-2.0 Snowflake cost optimization proxy with verified caching and signed savings evidence |
 | kafka-backup | High-performance Kafka backup and restore tool with PITR support |
 | teams-cli | Microsoft Teams CLI for AI agents and automation |
 
@@ -21,7 +23,7 @@ brew install teams-cli
 
 ```bash
 brew update
-brew upgrade kafka-backup teams-cli
+brew upgrade chukei kafka-backup teams-cli
 ```
 
 ## License

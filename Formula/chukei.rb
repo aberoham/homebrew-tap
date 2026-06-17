@@ -1,22 +1,22 @@
 class Chukei < Formula
-  desc "Fair-source cost optimization engine for Snowflake — verified caching, auto-suspend, SQL rewriting, attribution; deploys as a transparent proxy"
+  desc "Snowflake cost optimization proxy with verified caching"
   homepage "https://chukei.dev"
   version "0.2.2"
   if OS.mac?
     if Hardware::CPU.arm?
       url "https://github.com/osodevops/chukei/releases/download/v0.2.2/chukei-cli-aarch64-apple-darwin.tar.xz"
-      sha256 "b431b24c3e2bd03c7106a6eeaed0cf6ecfd7cd6369957869fe6f2110fa0acc20"
+      sha256 "a32ceca9a4a2006c2a1721e523e228abb8a54271b59038b56376b35e0d8558ca"
     end
     if Hardware::CPU.intel?
       url "https://github.com/osodevops/chukei/releases/download/v0.2.2/chukei-cli-x86_64-apple-darwin.tar.xz"
-      sha256 "bd257b5a9dcda9068aae7cc1eff9b7528897e7dc6732add7a065aea84a20413a"
+      sha256 "e7c1ed32c52ada987b404864ab545f01ceb9e5c43c653c0efec9cbaa429e6893"
     end
   end
   if OS.linux? && Hardware::CPU.intel?
     url "https://github.com/osodevops/chukei/releases/download/v0.2.2/chukei-cli-x86_64-unknown-linux-gnu.tar.xz"
-    sha256 "849346a4660ae9f659c25c5bf6de9a425ed9be950c76cf2e3143f87870842355"
+    sha256 "ca25ab04b48ab8783239635923acedb2d273e46860ec6cd0b9d89c8dc7471a99"
   end
-  license "FSL-1.1-ALv2"
+  license "Apache-2.0"
 
   BINARY_ALIASES = {
     "aarch64-apple-darwin":     {},
