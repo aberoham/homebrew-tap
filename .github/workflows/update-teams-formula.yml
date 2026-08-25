@@ -1,0 +1,92 @@
+name: Update Teams CLI Formula
+run-name: Update teams-cli to ${{ github.event.client_payload.tag || inputs.tag }}
+
+on:
+  repository_dispatch:
+    types: [update-formula]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish (for example, v0.3.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-teams-cli-formula
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update teams-cli formula
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.client_payload.formula == 'teams-cli' &&
+      (github.event.client_payload.repo == 'osodevops/ms-teams-cli' ||
+       github.event.client_payload.repo == 'aberoham/ms-teams-cli'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TAG: ${{ github.event.client_payload.tag || inputs.tag }}
+      RELEASE_REPOSITORY: ${{ github.event.client_payload.repo || 'aberoham/ms-teams-cli' }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Validate release request
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release tag: $TAG" >&2
+            exit 1
+          fi
+          if [[ "$RELEASE_REPOSITORY" != "osodevops/ms-teams-cli" && "$RELEASE_REPOSITORY" != "aberoham/ms-teams-cli" ]]; then
+            echo "Unexpected release repository: $RELEASE_REPOSITORY" >&2
+            exit 1
+          fi
+
+      - name: Download release checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-all-errors \
+            "https://github.com/${RELEASE_REPOSITORY}/releases/download/${TAG}/checksums-sha256.txt" \
+            --output checksums-sha256.txt
+
+      - name: Update formula URLs and checksums
+        run: >-
+          ruby scripts/update-teams-formula.rb
+          "$TAG"
+          "$RELEASE_REPOSITORY"
+          checksums-sha256.txt
+          Formula/teams-cli.rb
+
+      - name: Validate formula update
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -c scripts/update-teams-formula.rb
+          ruby -c Formula/teams-cli.rb
+          git diff --check
+          if ! grep -Fq "releases/download/${TAG}/teams-${TAG}-" Formula/teams-cli.rb; then
+            echo "Formula does not reference ${TAG}" >&2
+            exit 1
+          fi
+
+      - name: Commit and publish formula
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- Formula/teams-cli.rb; then
+            echo "Formula already publishes ${TAG}"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/teams-cli.rb
+          git commit -m "Update teams-cli to ${TAG}"
+          git push origin HEAD:main
