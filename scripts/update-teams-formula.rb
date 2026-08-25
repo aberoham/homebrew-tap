@@ -33,6 +33,16 @@ targets = %w[
 formula = File.read(formula_path)
 original_formula = formula.dup
 
+# Pin the formula version explicitly so Homebrew never has to infer it from
+# the asset URL. Prerelease tags such as v0.5.0-alpha.1 are exactly where
+# URL inference becomes unreliable.
+release_version = tag.delete_prefix("v")
+if formula.sub!(/^\s*version "[^"]*"\n/, "version \"#{release_version}\"\n").nil?
+  unless formula.sub!(/^(\s*license "[^"]+"\n)/) { %(#{$1}version "#{release_version}"\n) }
+    abort "could not set version: no version line and no license anchor"
+  end
+end
+
 targets.each do |target|
   asset = "teams-#{tag}-#{target}.tar.gz"
   digest = checksums.fetch(asset) { abort "missing checksum for #{asset}" }
