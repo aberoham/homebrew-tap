@@ -36,4 +36,4 @@ my own releases. For OSO's official packages, use the upstream tap's instruction
 
 ## License
 
-MIT. Existing attribution and licensing are retained.
+MIT, as declared by the upstream tap. Neither repository ships a LICENSE file.
