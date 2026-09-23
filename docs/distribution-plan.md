@@ -152,14 +152,15 @@ Arm. It commits to `main` only from `main`'s own workflow, and only if `main`'s
 formula has not changed since the candidate was prepared; otherwise the run
 fails and asks to be re-run. Runs are serialized.
 
-For Outlook, keep the two-stage build and change GoReleaser's tap destination to
-`aberoham/homebrew-tap`. Configure prerelease handling explicitly and verify the
-cask publisher does not skip alpha tags. Keep the existing Go module path for
-version ldflags. Disable fork npm and Model Context Protocol registry publishing
+For Outlook, keep the two-stage build but disable GoReleaser's cask publisher on
+the fork, so the fork holds no tap credential; a tap updater generates
+`Casks/olk.rb` from the published release, as for Teams. Mark prerelease tags
+as GitHub prereleases explicitly. Keep the existing Go module path for version
+ldflags. Disable fork npm and Model Context Protocol registry publishing
 independently of Homebrew.
 [GoReleaser cask configuration](https://goreleaser.com/customization/publish/homebrew_casks/)
 and [release configuration](https://goreleaser.com/customization/publish/scm/)
-are separate settings; do not assume marking a release as prerelease publishes a cask.
+are separate settings.
 
 For Entra, extend its existing Rust CI with release packaging after its public
 source is settled. Reuse the Teams packaging approach where appropriate, without
