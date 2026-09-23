@@ -7,7 +7,7 @@ This tap is independent of the upstream projects' official release channels.
 
 | Tool | Intended package | Status |
 | --- | --- | --- |
-| Microsoft Teams | `aberoham/tap/teams-cli` | Existing formula still points to upstream v0.2.7; personal release publishing is being completed |
+| Microsoft Teams | `aberoham/tap/teams-cli` | Formula still points to upstream v0.2.7; it moves to the first fork prerelease once one is published |
 | Microsoft Outlook (`olk`) | `aberoham/tap/olk` (macOS cask) | Planned; not yet available in this tap |
 | Microsoft Entra (`entra`) | `aberoham/tap/entra` | Planned; requires a public release source |
 
