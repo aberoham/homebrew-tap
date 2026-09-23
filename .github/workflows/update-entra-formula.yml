@@ -1,0 +1,237 @@
+name: Update Entra Formula
+run-name: Update entra ${{ inputs.tag || 'to the newest stable release' }}
+
+# The tap reads aberoham/ms-entra-cli's public releases and commits with its
+# own token, so no other repository holds a credential that can write here.
+on:
+  schedule:
+    # 09:47 UTC, Monday to Friday. Run the workflow by hand to publish sooner.
+    - cron: "47 9 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish (default is the newest stable release)
+        required: false
+        type: string
+      retest:
+        description: Run the install tests even if the formula is already current
+        required: false
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: update-entra-formula
+  cancel-in-progress: false
+
+env:
+  RELEASE_REPOSITORY: aberoham/ms-entra-cli
+
+jobs:
+  prepare:
+    name: Prepare formula
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      changed: ${{ steps.formula.outputs.changed }}
+      base: ${{ steps.formula.outputs.base }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      # The updater runs under `brew ruby` for Homebrew's Version class, so
+      # each step that calls it puts Homebrew on PATH first.
+      - name: Test the updater
+        shell: bash
+        run: |
+          set -euo pipefail
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          ruby test/update_entra_formula_test.rb
+
+      # A named tag may move the formula to any release, which is how a bad
+      # release is rolled back. The unattended default takes the newest stable
+      # release and only moves up; prereleases are published only by name.
+      - name: Choose release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$REQUESTED_TAG" ]]; then
+            tag="$REQUESTED_TAG"
+            allow_downgrade=true
+          else
+            tag="$(gh release list --repo "$RELEASE_REPOSITORY" --exclude-drafts \
+              --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName // ""')"
+            allow_downgrade=false
+          fi
+          if [[ -z "$tag" ]]; then
+            echo "No published release in ${RELEASE_REPOSITORY}"
+          elif [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]]; then
+            echo "Refusing ${tag}: expected vX.Y.Z or vX.Y.Z-alpha.N, -beta.N or -rc.N" >&2
+            exit 1
+          fi
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "allow_downgrade=${allow_downgrade}" >> "$GITHUB_OUTPUT"
+
+      - name: Download release checksums
+        if: steps.release.outputs.tag != ''
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-all-errors \
+            "https://github.com/${RELEASE_REPOSITORY}/releases/download/${TAG}/checksums-sha256.txt" \
+            --output "${RUNNER_TEMP}/checksums-sha256.txt"
+
+      - name: Update formula URLs and checksums
+        id: formula
+        if: steps.release.outputs.tag != ''
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          ALLOW_DOWNGRADE: ${{ steps.release.outputs.allow_downgrade }}
+          RETEST: ${{ inputs.retest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          base="$(git rev-parse HEAD:Formula/entra.rb)"
+          echo "base=${base}" >> "$GITHUB_OUTPUT"
+          flags=()
+          if [[ "$ALLOW_DOWNGRADE" == true ]]; then
+            flags+=(--allow-downgrade)
+          fi
+          brew ruby -- scripts/update-entra-formula.rb "${flags[@]}" \
+            "$TAG" "$RELEASE_REPOSITORY" "${RUNNER_TEMP}/checksums-sha256.txt" \
+            Formula/entra.rb
+          ruby -c Formula/entra.rb
+          git diff --check
+          # A retest sends the unchanged formula through the install matrix;
+          # the publish job then finds nothing to commit.
+          if git diff --quiet -- Formula/entra.rb && [[ "$RETEST" != true ]]; then
+            echo "Formula already publishes ${TAG}"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Keep the candidate formula
+        if: steps.formula.outputs.changed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: entra-formula
+          path: Formula/entra.rb
+          retention-days: 1
+
+  test:
+    name: Install on ${{ matrix.runner }}
+    needs: prepare
+    if: needs.prepare.outputs.changed == 'true'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    permissions: {}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-latest, macos-15-intel, ubuntu-latest, ubuntu-24.04-arm]
+    steps:
+      - name: Download candidate formula
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: entra-formula
+          path: ${{ runner.temp }}/candidate
+
+      # Homebrew installs formulae only from a tap, so the candidate goes into
+      # a throwaway local one. The test block runs `entra version` and
+      # `entra --help` and touches no Microsoft account.
+      - name: Install and test
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+          TAG: ${{ needs.prepare.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          fi
+          brew tap-new --no-git aberoham/candidate
+          cp "${RUNNER_TEMP}/candidate/entra.rb" \
+            "$(brew --repository aberoham/candidate)/Formula/entra.rb"
+          # Runner images carry different Homebrew releases; those with tap
+          # trust may refuse an untrusted tap, and older ones lack the command.
+          if brew trust --help >/dev/null 2>&1; then
+            brew trust --tap aberoham/candidate
+          fi
+          brew install --formula aberoham/candidate/entra
+          brew test aberoham/candidate/entra
+          output="$("$(brew --prefix)/bin/entra" version)"
+          echo "$output"
+          if [[ "$output" != "entra ${TAG#v} ("* ]]; then
+            echo "entra version does not report ${TAG#v}" >&2
+            exit 1
+          fi
+          test -x "$(brew --prefix)/share/doc/entra/contrib/resign.sh"
+
+  publish:
+    name: Publish formula
+    needs: [prepare, test]
+    # A run dispatched from another branch may prepare and test, but only a
+    # run of main's own workflow may publish.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # push the updated formula to main
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: true # zizmor: ignore[artipacked] the push below needs it
+
+      # The candidate replaces the whole file, so publishing it over a formula
+      # that changed after preparation would silently discard that change.
+      - name: Check main's formula is the one the candidate was built from
+        env:
+          BASE: ${{ needs.prepare.outputs.base }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          current="$(git rev-parse HEAD:Formula/entra.rb)"
+          if [[ "$current" != "$BASE" ]]; then
+            echo "Formula/entra.rb on main changed after this run prepared its candidate." >&2
+            echo "Re-run the workflow to build the candidate from the current formula." >&2
+            exit 1
+          fi
+
+      - name: Download candidate formula
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: entra-formula
+          path: Formula
+
+      - name: Commit and push
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- Formula/entra.rb; then
+            echo "Formula already publishes ${TAG}"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/entra.rb
+          git commit -m "Update entra to ${TAG}"
+          git push origin HEAD:main
