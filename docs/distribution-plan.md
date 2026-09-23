@@ -135,8 +135,10 @@ future `entra-next` entry if both channels need to be installable.
 2. The tap's own updater then reads the published release; no source repository
    writes to the tap.
 3. Tap validation checks source allowlists, explicit version, asset names, archive
-   layout and hashes; installs the package on supported runners; and runs
-   `--version` and `--help` without touching live Microsoft accounts.
+   layout and hashes; installs the package on supported runners; and runs the
+   tool's version and help commands (`teams --version`, `olk version`) without
+   touching live Microsoft accounts. The reported version must match the
+   release exactly.
 4. Publish the recipe only after checks pass. Confirm the committed recipe matches
    all expected release assets. A GitHub prerelease badge alone proves none of this.
 

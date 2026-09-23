@@ -158,7 +158,7 @@ jobs:
           brew install --cask aberoham/candidate/olk
           output="$("$(brew --prefix)/bin/olk" version)"
           echo "$output"
-          if [[ "$output" != *"${TAG#v}"* ]]; then
+          if [[ "$output" != "olk ${TAG#v} ("* ]]; then
             echo "olk version does not report ${TAG#v}" >&2
             exit 1
           fi

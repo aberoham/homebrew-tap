@@ -72,6 +72,22 @@ class UpdateOlkCaskTest < Minitest::Test
     assert_match(/missing checksum for olk_1\.14\.1-alpha\.1_darwin_amd64/, err)
   end
 
+  def test_refuses_malformed_checksum_files
+    tag = "v1.14.1-alpha.1"
+    version = tag.delete_prefix("v")
+    {
+      "#{'1' * 64}  olk_#{version}_darwin_arm64.tar.gz extra\n" => /malformed checksum line/,
+      "#{'z' * 64}  olk_#{version}_darwin_arm64.tar.gz\n#{'2' * 64}  olk_#{version}_darwin_amd64.tar.gz\n" =>
+        /invalid SHA-256 for olk_#{Regexp.escape(version)}_darwin_arm64/,
+    }.each do |contents, message|
+      path = File.join(@dir, "bad-checksums.txt")
+      File.write(path, contents)
+      _, err, status = run_script(tag, checksums: path)
+      refute status.success?, contents
+      assert_match message, err
+    end
+  end
+
   def test_refuses_an_unattended_downgrade_but_allows_a_named_rollback
     assert run_script("v1.14.1-alpha.2")[2].success?
 

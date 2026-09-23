@@ -137,6 +137,7 @@ jobs:
         env:
           HOMEBREW_NO_AUTO_UPDATE: "1"
           HOMEBREW_NO_INSTALL_CLEANUP: "1"
+          TAG: ${{ needs.prepare.outputs.tag }}
         shell: bash
         run: |
           set -euo pipefail
@@ -153,7 +154,12 @@ jobs:
           fi
           brew install --formula aberoham/candidate/teams-cli
           brew test aberoham/candidate/teams-cli
-          "$(brew --prefix)/bin/teams" --version
+          output="$("$(brew --prefix)/bin/teams" --version)"
+          echo "$output"
+          if [[ "$output" != "teams ${TAG#v}" ]]; then
+            echo "teams --version does not report ${TAG#v}" >&2
+            exit 1
+          fi
 
   publish:
     name: Publish formula
