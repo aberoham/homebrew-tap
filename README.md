@@ -7,25 +7,27 @@ This tap is independent of the upstream projects' official release channels.
 
 | Tool | Intended package | Status |
 | --- | --- | --- |
-| Microsoft Teams | `aberoham/tap/teams-cli` | Formula still points to upstream v0.2.7; it moves to the first fork prerelease once one is published |
-| Microsoft Outlook (`olk`) | `aberoham/tap/olk` (macOS cask) | Cask appears with the first fork prerelease |
+| Microsoft Teams | `aberoham/tap/teams-cli` | Available; follows prereleases of [aberoham/ms-teams-cli](https://github.com/aberoham/ms-teams-cli) `next` |
+| Microsoft Outlook (`olk`) | `aberoham/tap/olk` (macOS cask) | Available; follows prereleases of [aberoham/olkcli](https://github.com/aberoham/olkcli) `next` |
 | Microsoft Entra (`entra`) | `aberoham/tap/entra` | Available; follows stable releases of [aberoham/ms-entra-cli](https://github.com/aberoham/ms-entra-cli) |
 
-Teams and Outlook will distribute my tested integration builds. Entra will
-follow my own stable releases. See the [distribution plan](docs/distribution-plan.md)
-for packaging, versioning, upgrades and implementation status.
+Teams and Outlook distribute my tested integration builds. Entra follows my own
+stable releases. See the [distribution plan](docs/distribution-plan.md) for
+packaging, versioning, upgrades and implementation status.
 
 ## Using this tap
 
 ```sh
-brew tap aberoham/tap
+brew install aberoham/tap/teams-cli
+brew install --cask aberoham/tap/olk
+brew install aberoham/tap/entra
 ```
 
-Use fully qualified package names when selecting this tap. Adding it does not
-replace a tool already installed from another tap. Wait for the status table to
-mark a personal package available before using it as that tool's release channel.
-Switching an existing installation will require explicit package replacement;
-future packages with distinct executable names may support side-by-side use.
+Use fully qualified package names when selecting this tap; that also trusts the
+one package under Homebrew's tap trust rules. Installing from here does not
+replace a tool already installed from another tap: uninstall that one first.
+Afterwards check `command -v` for the tool, since an older copy elsewhere on
+`PATH` can still run first.
 
 ## Repository history
 
