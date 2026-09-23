@@ -152,12 +152,15 @@ Arm. It commits to `main` only from `main`'s own workflow, and only if `main`'s
 formula has not changed since the candidate was prepared; otherwise the run
 fails and asks to be re-run. Runs are serialized.
 
-For Outlook, keep the two-stage build but disable GoReleaser's cask publisher on
-the fork, so the fork holds no tap credential; a tap updater generates
-`Casks/olk.rb` from the published release, as for Teams. Mark prerelease tags
-as GitHub prereleases explicitly. Keep the existing Go module path for version
-ldflags. Disable fork npm and Model Context Protocol registry publishing
-independently of Homebrew.
+For Outlook, the fork keeps the two-stage build. GoReleaser still renders the
+cask but uploads it only from `rlrghb/olkcli`, so the fork holds no tap
+credential. The fork's release runs CI first, accepts the same three prerelease
+forms, and marks them as GitHub prereleases. The tap's `update-olk-cask.yml`
+writes `Casks/olk.rb` from the release's `checksums.txt` under the same rules as
+the Teams updater, and installs and runs the candidate on macOS Arm and Intel
+before committing. The existing Go module path stays, for version ldflags. npm
+and Model Context Protocol registry publishing stay off on the fork because its
+`PUBLISH_NPM` variable is unset.
 [GoReleaser cask configuration](https://goreleaser.com/customization/publish/homebrew_casks/)
 and [release configuration](https://goreleaser.com/customization/publish/scm/)
 are separate settings.
