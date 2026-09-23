@@ -1,12 +1,12 @@
-name: Update Teams CLI Formula
-run-name: Update teams-cli ${{ inputs.tag || 'to the newest fork release' }}
+name: Update olk Cask
+run-name: Update olk ${{ inputs.tag || 'to the newest fork release' }}
 
 # The tap reads the fork's public releases and commits with its own token, so
 # no other repository holds a credential that can write here.
 on:
   schedule:
-    # 09:17 UTC, Monday to Friday. Run the workflow by hand to publish sooner.
-    - cron: "17 9 * * 1-5"
+    # 09:47 UTC, Monday to Friday. Run the workflow by hand to publish sooner.
+    - cron: "47 9 * * 1-5"
   workflow_dispatch:
     inputs:
       tag:
@@ -17,23 +17,23 @@ on:
 permissions: {}
 
 concurrency:
-  group: update-teams-cli-formula
+  group: update-olk-cask
   cancel-in-progress: false
 
 env:
-  RELEASE_REPOSITORY: aberoham/ms-teams-cli
+  RELEASE_REPOSITORY: aberoham/olkcli
 
 jobs:
   prepare:
-    name: Prepare formula
+    name: Prepare cask
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
     outputs:
       tag: ${{ steps.release.outputs.tag }}
-      changed: ${{ steps.formula.outputs.changed }}
-      base: ${{ steps.formula.outputs.base }}
+      changed: ${{ steps.cask.outputs.changed }}
+      base: ${{ steps.cask.outputs.base }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -41,10 +41,10 @@ jobs:
           persist-credentials: false
 
       - name: Test the updater
-        run: ruby test/update_teams_formula_test.rb
+        run: ruby test/update_olk_cask_test.rb
 
-      # A named tag may move the formula to any fork prerelease, which is how
-      # a bad release is rolled back. The unattended default only moves up.
+      # A named tag may move the cask to any fork prerelease, which is how a
+      # bad release is rolled back. The unattended default only moves up.
       - name: Choose release
         id: release
         env:
@@ -79,11 +79,12 @@ jobs:
           set -euo pipefail
           curl --fail --location --silent --show-error \
             --retry 5 --retry-all-errors \
-            "https://github.com/${RELEASE_REPOSITORY}/releases/download/${TAG}/checksums-sha256.txt" \
-            --output "${RUNNER_TEMP}/checksums-sha256.txt"
+            "https://github.com/${RELEASE_REPOSITORY}/releases/download/${TAG}/checksums.txt" \
+            --output "${RUNNER_TEMP}/checksums.txt"
 
-      - name: Update formula URLs and checksums
-        id: formula
+      # The cask may not exist yet, so "absent" stands in for its blob.
+      - name: Write the cask
+        id: cask
         if: steps.release.outputs.tag != ''
         env:
           TAG: ${{ steps.release.outputs.tag }}
@@ -91,25 +92,29 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "base=$(git rev-parse HEAD:Formula/teams-cli.rb)" >> "$GITHUB_OUTPUT"
-          ruby scripts/update-teams-formula.rb \
-            "$TAG" "$RELEASE_REPOSITORY" "${RUNNER_TEMP}/checksums-sha256.txt" \
-            Formula/teams-cli.rb
-          ruby -c Formula/teams-cli.rb
-          git diff --check
-          if git diff --quiet -- Formula/teams-cli.rb; then
-            echo "Formula already publishes ${TAG}"
+          if git cat-file -e HEAD:Casks/olk.rb 2>/dev/null; then
+            base="$(git rev-parse HEAD:Casks/olk.rb)"
+          else
+            base=absent
+          fi
+          echo "base=${base}" >> "$GITHUB_OUTPUT"
+          mkdir -p Casks
+          ruby scripts/update-olk-cask.rb \
+            "$TAG" "$RELEASE_REPOSITORY" "${RUNNER_TEMP}/checksums.txt" Casks/olk.rb
+          ruby -c Casks/olk.rb
+          if [[ -z "$(git status --porcelain -- Casks/olk.rb)" ]]; then
+            echo "Cask already publishes ${TAG}"
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Keep the candidate formula
-        if: steps.formula.outputs.changed == 'true'
+      - name: Keep the candidate cask
+        if: steps.cask.outputs.changed == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: teams-cli-formula
-          path: Formula/teams-cli.rb
+          name: olk-cask
+          path: Casks/olk.rb
           retention-days: 1
 
   test:
@@ -122,18 +127,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [macos-latest, macos-15-intel, ubuntu-latest, ubuntu-24.04-arm]
+        runner: [macos-latest, macos-15-intel]
     steps:
-      - name: Download candidate formula
+      - name: Download candidate cask
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: teams-cli-formula
+          name: olk-cask
           path: ${{ runner.temp }}/candidate
 
-      # Homebrew installs formulae only from a tap, so the candidate goes into
-      # a throwaway local one. The test block runs --version and --help and
-      # touches no Microsoft account.
-      - name: Install and test
+      # Homebrew installs casks only from a tap, so the candidate goes into a
+      # throwaway local one. Running `olk version` touches no Microsoft account
+      # and proves the quarantine flag was removed.
+      - name: Install and run
         env:
           HOMEBREW_NO_AUTO_UPDATE: "1"
           HOMEBREW_NO_INSTALL_CLEANUP: "1"
@@ -141,28 +146,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$RUNNER_OS" == Linux ]]; then
-            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          fi
           brew tap-new --no-git aberoham/candidate
-          cp "${RUNNER_TEMP}/candidate/teams-cli.rb" \
-            "$(brew --repository aberoham/candidate)/Formula/teams-cli.rb"
+          tap_dir="$(brew --repository aberoham/candidate)"
+          mkdir -p "${tap_dir}/Casks"
+          cp "${RUNNER_TEMP}/candidate/olk.rb" "${tap_dir}/Casks/olk.rb"
           # Runner images carry different Homebrew releases; those with tap
           # trust may refuse an untrusted tap, and older ones lack the command.
           if brew trust --help >/dev/null 2>&1; then
             brew trust --tap aberoham/candidate
           fi
-          brew install --formula aberoham/candidate/teams-cli
-          brew test aberoham/candidate/teams-cli
-          output="$("$(brew --prefix)/bin/teams" --version)"
+          brew install --cask aberoham/candidate/olk
+          output="$("$(brew --prefix)/bin/olk" version)"
           echo "$output"
-          if [[ "$output" != "teams ${TAG#v}" ]]; then
-            echo "teams --version does not report ${TAG#v}" >&2
+          if [[ "$output" != "olk ${TAG#v} ("* ]]; then
+            echo "olk version does not report ${TAG#v}" >&2
             exit 1
           fi
+          "$(brew --prefix)/bin/olk" --help >/dev/null
 
   publish:
-    name: Publish formula
+    name: Publish cask
     needs: [prepare, test]
     # A run dispatched from another branch may prepare and test, but only a
     # run of main's own workflow may publish.
@@ -177,26 +180,30 @@ jobs:
           ref: main
           persist-credentials: true # zizmor: ignore[artipacked] the push below needs it
 
-      # The candidate replaces the whole file, so publishing it over a formula
+      # The candidate replaces the whole file, so publishing it over a cask
       # that changed after preparation would silently discard that change.
-      - name: Check main's formula is the one the candidate was built from
+      - name: Check main's cask is the one the candidate was built from
         env:
           BASE: ${{ needs.prepare.outputs.base }}
         shell: bash
         run: |
           set -euo pipefail
-          current="$(git rev-parse HEAD:Formula/teams-cli.rb)"
+          if git cat-file -e HEAD:Casks/olk.rb 2>/dev/null; then
+            current="$(git rev-parse HEAD:Casks/olk.rb)"
+          else
+            current=absent
+          fi
           if [[ "$current" != "$BASE" ]]; then
-            echo "Formula/teams-cli.rb on main changed after this run prepared its candidate." >&2
-            echo "Re-run the workflow to build the candidate from the current formula." >&2
+            echo "Casks/olk.rb on main changed after this run prepared its candidate." >&2
+            echo "Re-run the workflow to build the candidate from the current cask." >&2
             exit 1
           fi
 
-      - name: Download candidate formula
+      - name: Download candidate cask
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: teams-cli-formula
-          path: Formula
+          name: olk-cask
+          path: Casks
 
       - name: Commit and push
         env:
@@ -204,12 +211,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- Formula/teams-cli.rb; then
-            echo "Formula already publishes ${TAG}"
+          if [[ -z "$(git status --porcelain -- Casks/olk.rb)" ]]; then
+            echo "Cask already publishes ${TAG}"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Formula/teams-cli.rb
-          git commit -m "Update teams-cli to ${TAG}"
+          git add Casks/olk.rb
+          git commit -m "Update olk to ${TAG}"
           git push origin HEAD:main
