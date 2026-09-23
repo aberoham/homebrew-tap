@@ -177,8 +177,8 @@ explicitly design workflow dispatch/reuse. See
 
 The tap updater needs only public release URLs plus a push to its own repository,
 which its own `GITHUB_TOKEN` already permits, so no source repository triggers it
-or holds a credential for it. It runs hourly and picks up the newest fork release,
-and it can be run at once, optionally naming a tag:
+or holds a credential for it. It runs once each weekday at 09:17 UTC and picks
+up the newest fork release. It can also be run at once, optionally naming a tag:
 
     gh workflow run update-teams-formula.yml --repo aberoham/homebrew-tap -f tag=v0.7.1-alpha.1
 

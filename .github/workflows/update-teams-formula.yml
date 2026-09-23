@@ -5,7 +5,8 @@ run-name: Update teams-cli ${{ inputs.tag || 'to the newest fork release' }}
 # no other repository holds a credential that can write here.
 on:
   schedule:
-    - cron: "17 * * * *"
+    # 09:17 UTC, Monday to Friday. Run the workflow by hand to publish sooner.
+    - cron: "17 9 * * 1-5"
   workflow_dispatch:
     inputs:
       tag:
