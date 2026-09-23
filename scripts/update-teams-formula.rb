@@ -1,17 +1,24 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Points Formula/teams-cli.rb at one fork prerelease. Set ALLOW_DOWNGRADE=true
+# to move the formula to a lower version, as a deliberate rollback does.
+
 tag, repository, checksums_path, formula_path = ARGV
 
 unless ARGV.length == 4
   abort "usage: update-teams-formula.rb TAG REPOSITORY CHECKSUMS FORMULA"
 end
 
-unless tag.match?(/\Av\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\z/)
-  abort "invalid release tag: #{tag.inspect}"
+# The fork channel carries prereleases only, so it can never shadow an
+# upstream stable release of the same number. Limiting the labels to alpha,
+# beta and rc keeps RubyGems' ordering, used below, identical to Homebrew's;
+# the two disagree on labels such as "pre" and "preview".
+unless tag.match?(/\Av\d+\.\d+\.\d+-(?:alpha|beta|rc)\.\d+\z/)
+  abort "invalid release tag: #{tag.inspect} (expected vX.Y.Z-alpha.N, -beta.N or -rc.N)"
 end
 
-allowed_repos = %w[osodevops/ms-teams-cli aberoham/ms-teams-cli]
+allowed_repos = %w[aberoham/ms-teams-cli]
 unless allowed_repos.include?(repository)
   abort "unexpected release repository: #{repository.inspect} (allowed: #{allowed_repos.join(', ')})"
 end
@@ -32,13 +39,24 @@ targets = %w[
 
 formula = File.read(formula_path)
 original_formula = formula.dup
+release_version = tag.delete_prefix("v")
+
+# The published version is the explicit version line, or failing that the one
+# embedded in the first download URL, which is how the inherited formula is
+# written.
+current_version = formula[/^[ \t]*version "([^"]+)"$/, 1] ||
+                  formula[%r{/releases/download/v([^/"]+)/}, 1]
+if current_version && ENV["ALLOW_DOWNGRADE"] != "true" &&
+   Gem::Version.new(release_version) < Gem::Version.new(current_version)
+  abort "refusing to move teams-cli from #{current_version} down to #{release_version} " \
+        "without ALLOW_DOWNGRADE=true"
+end
 
 # Pin the formula version explicitly so Homebrew never has to infer it from
 # the asset URL. Prerelease tags such as v0.5.0-alpha.1 are exactly where
 # URL inference becomes unreliable.
-release_version = tag.delete_prefix("v")
-if formula.sub!(/^\s*version "[^"]*"\n/, "version \"#{release_version}\"\n").nil?
-  unless formula.sub!(/^(\s*license "[^"]+"\n)/) { %(#{$1}version "#{release_version}"\n) }
+if formula.sub!(/^[ \t]*version "[^"]*"\n/, "  version \"#{release_version}\"\n").nil?
+  unless formula.sub!(/^([ \t]*license "[^"]+"\n)/) { %(#{$1}  version "#{release_version}"\n) }
     abort "could not set version: no version line and no license anchor"
   end
 end
@@ -48,7 +66,7 @@ targets.each do |target|
   digest = checksums.fetch(asset) { abort "missing checksum for #{asset}" }
   abort "invalid SHA-256 for #{asset}: #{digest.inspect}" unless digest.match?(/\A[0-9a-f]{64}\z/)
 
-  # Match any owner for ms-teams-cli to support both upstream and fork releases
+  # Any owner matches so that the inherited upstream URLs are replaced too.
   pattern = %r{^(\s*)url "https://github\.com/[^/]+/ms-teams-cli/releases/download/[^/"]+/teams-[^/"]+-#{Regexp.escape(target)}\.tar\.gz"\n\1sha256 "[0-9a-f]{64}"$}
   matches = formula.scan(pattern).length
   abort "expected one formula block for #{target}, found #{matches}" unless matches == 1
