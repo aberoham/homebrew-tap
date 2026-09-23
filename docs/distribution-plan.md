@@ -15,7 +15,7 @@ checksums. It does not contain the source repositories or build a combined relea
 | --- | --- | --- | --- | --- |
 | Teams | `aberoham/ms-teams-cli` | `Formula/teams-cli.rb` | `teams` | My tested `next` integration builds |
 | Outlook | `aberoham/olkcli` | `Casks/olk.rb` | `olk` | My tested `next` integration builds |
-| Entra | Public repository to be established | `Formula/entra.rb` | `entra` | My stable releases; optional prereleases |
+| Entra | `aberoham/ms-entra-cli` | `Formula/entra.rb` | `entra` | My stable releases; optional prereleases |
 
 Teams and Entra formulas target macOS and Linux. Outlook initially keeps its
 existing macOS cask packaging; its Linux archives remain direct downloads.
@@ -44,7 +44,7 @@ name trusts that one package, so no separate `brew trust` step is needed. See
 
 - The tap is a fork of OSO's tap. Its README, repository description and
   homepage have been rewritten to describe personal ownership. It contains
-  21 inherited formulas, only one Teams updater workflow, and no Casks directory.
+  21 inherited formulas, and updater workflows for Teams, Outlook and Entra.
 - The Teams formula still downloads upstream v0.2.7. The updater now reads the
   fork's releases itself and accepts fork prereleases only, but no fork release
   exists yet.
@@ -53,9 +53,9 @@ name trusts that one package, so no separate `brew trust` step is needed. See
   state was never tagged.
 - Outlook is Go, with a two-stage GoReleaser build. Its configuration publishes
   a cask to the upstream maintainer's tap. My fork is public and has no releases.
-- Entra is Rust, version 0.1.0, binary `entra`, and already has CI. A public
-  release source remains a prerequisite; moving code into that public repository
-  is out of scope for this plan.
+- Entra is Rust, binary `entra`, published from the public
+  `aberoham/ms-entra-cli`. Its release workflow builds macOS, Linux and Windows
+  archives; the tap's `update-entra-formula.yml` publishes the formula.
 
 ## Ownership and maintenance
 
@@ -136,9 +136,9 @@ future `entra-next` entry if both channels need to be installable.
    writes to the tap.
 3. Tap validation checks source allowlists, explicit version, asset names, archive
    layout and hashes; installs the package on supported runners; and runs the
-   tool's version and help commands (`teams --version`, `olk version`) without
-   touching live Microsoft accounts. The reported version must match the
-   release exactly.
+   tool's version and help commands (`teams --version`, `olk version`,
+   `entra version`) without touching live Microsoft accounts. The reported
+   version must match the release exactly.
 4. Publish the recipe only after checks pass. Confirm the committed recipe matches
    all expected release assets. A GitHub prerelease badge alone proves none of this.
 
@@ -167,9 +167,15 @@ and Model Context Protocol registry publishing stay off on the fork because its
 and [release configuration](https://goreleaser.com/customization/publish/scm/)
 are separate settings.
 
-For Entra, extend its existing Rust CI with release packaging after its public
-source is settled. Reuse the Teams packaging approach where appropriate, without
-copying Teams-specific paths, documentation filenames or dependency assumptions.
+For Entra, the release workflow runs CI, requires the tag to equal the
+`Cargo.toml` version, and marks a release as a prerelease only when its version
+carries a hyphen. It builds all five targets natively, including Arm Linux on
+GitHub's Arm runner, and runs each packaged binary before publishing. The tap's
+`update-entra-formula.yml` mirrors the Teams updater, with two differences. It
+accepts stable tags, and its unattended run takes only the newest stable
+release; a prerelease reaches the formula only when named. It compares versions
+with Homebrew's own `Version` class by running under `brew ruby`, so the
+RubyGems ordering caveat above does not apply to it.
 
 ## Credentials
 
@@ -186,6 +192,9 @@ or holds a credential for it. It runs once each weekday at 09:17 UTC and picks
 up the newest fork release. It can also be run at once, optionally naming a tag:
 
     gh workflow run update-teams-formula.yml --repo aberoham/homebrew-tap -f tag=v0.7.1-alpha.1
+
+The Entra updater runs the same way, at 09:47 UTC, from
+`update-entra-formula.yml`.
 
 A public repository's scheduled workflows are disabled after 60 days without
 repository activity; GitHub's notice email is the prompt to re-enable them.
@@ -205,9 +214,10 @@ updater generate the cask from the published release, as for Teams.
 3. Prepare Outlook publisher changes in an isolated checkout, preserving existing
    local edits. Verify macOS Intel/Arm archives, fork release URLs, cask installation
    and upgrade. Publish its first tested integration release and cask.
-4. After the Entra public repository prerequisite is satisfied, publish its first
-   supported stable release and formula. Do not move private code as part of this
-   work or create a nonfunctional formula with placeholder download URLs.
+4. Publish Entra's first stable release, then add `Formula/entra.rb` generated
+   from that release's checksums. Never commit a formula whose download URLs
+   point at a release that does not exist; `test/fixtures/entra-0.0.1.rb` is the
+   template, not a formula.
 5. Keep the three-tool status table current. Completion means all eligible tools
    install from this tap and upgrade to a subsequent release, not merely that the
    tap repository exists or an alpha tag was pushed.
