@@ -8,7 +8,7 @@ This tap is independent of the upstream projects' official release channels.
 | Tool | Intended package | Status |
 | --- | --- | --- |
 | Microsoft Teams | `aberoham/tap/teams-cli` | Formula still points to upstream v0.2.7; it moves to the first fork prerelease once one is published |
-| Microsoft Outlook (`olk`) | `aberoham/tap/olk` (macOS cask) | Planned; not yet available in this tap |
+| Microsoft Outlook (`olk`) | `aberoham/tap/olk` (macOS cask) | Cask appears with the first fork prerelease |
 | Microsoft Entra (`entra`) | `aberoham/tap/entra` | Planned; requires a public release source |
 
 Teams and Outlook will distribute my tested integration builds. Entra will

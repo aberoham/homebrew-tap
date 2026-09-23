@@ -94,6 +94,23 @@ class UpdateTeamsFormulaTest < Minitest::Test
     assert_match(/missing checksum for teams-#{tag}-x86_64-apple-darwin/, err)
   end
 
+  def test_refuses_malformed_checksum_files
+    tag = "v0.7.1-alpha.1"
+    first = "teams-#{tag}-#{TARGETS.first}.tar.gz"
+    rest = TARGETS.drop(1).map { |t| "#{'2' * 64} teams-#{tag}-#{t}.tar.gz" }
+    {
+      "#{'1' * 64} #{first} extra\n" => /malformed checksum line/,
+      "#{(["#{'z' * 64} #{first}"] + rest).join("\n")}\n" =>
+        /invalid SHA-256 for #{Regexp.escape(first)}/,
+    }.each do |contents, message|
+      path = File.join(@dir, "bad-checksums.txt")
+      File.write(path, contents)
+      _, err, status = run_script(tag, checksums: path)
+      refute status.success?, contents
+      assert_match message, err
+    end
+  end
+
   def test_refuses_an_unattended_downgrade_but_allows_a_named_rollback
     assert run_script("v0.7.1-alpha.2")[2].success?
 
