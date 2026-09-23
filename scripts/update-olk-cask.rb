@@ -52,7 +52,7 @@ download = "https://github.com/#{repository}/releases/download/v\#{version}/olk_
 # The archive holds olk at its root. The binary is not notarized, so a
 # postflight step removes the quarantine flag that would otherwise make
 # Gatekeeper kill it on first run. Declarative `postflight_steps` replace the
-# deprecated Ruby `postflight` block; Homebrew has supported them since 6.0.15.
+# deprecated Ruby `postflight` block; Homebrew has run them since 6.0.13.
 cask = <<~RUBY
   cask "olk" do
     version "#{version}"

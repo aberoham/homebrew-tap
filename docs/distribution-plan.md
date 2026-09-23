@@ -217,6 +217,6 @@ updater generate the cask from the published release, as for Teams.
    install from this tap and upgrade to a subsequent release, not merely that the
    tap repository exists or an alpha tag was pushed.
 
-As of 2026-09-23 steps 1 to 4 are done and all three packages install from this
-tap. Upgrade and rollback have not yet been exercised; that needs a second
-release of each tool.
+As of 2026-09-23 the first release of each tool is published and installs from
+this tap, which completes steps 1 and 4. Steps 2 and 3 remain open only for
+their upgrade and rollback checks, which need a second release of each tool.
