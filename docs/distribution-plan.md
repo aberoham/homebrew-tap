@@ -35,9 +35,9 @@ brew install aberoham/tap/entra
 These are target commands, not a claim that all three packages exist today.
 Use fully qualified names to select this tap explicitly. Adding a tap alone does
 not switch an existing installation. Homebrew documents that selection in
-[its taps guide](https://docs.brew.sh/Taps). Homebrew 7 ignores packages from
-taps it does not trust; installing by fully qualified name trusts that one
-package, so no separate `brew trust` step is needed. See
+[its taps guide](https://docs.brew.sh/Taps). Since Homebrew 6.0.0 it
+ignores packages from taps it does not trust; installing by fully qualified
+name trusts that one package, so no separate `brew trust` step is needed. See
 [Homebrew's tap trust guide](https://docs.brew.sh/Tap-Trust).
 
 ## Current evidence

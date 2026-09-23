@@ -145,6 +145,11 @@ jobs:
           brew tap-new --no-git aberoham/candidate
           cp "${RUNNER_TEMP}/candidate/teams-cli.rb" \
             "$(brew --repository aberoham/candidate)/Formula/teams-cli.rb"
+          # Runner images carry different Homebrew releases; those with tap
+          # trust may refuse an untrusted tap, and older ones lack the command.
+          if brew trust --help >/dev/null 2>&1; then
+            brew trust --tap aberoham/candidate
+          fi
           brew install --formula aberoham/candidate/teams-cli
           brew test aberoham/candidate/teams-cli
           "$(brew --prefix)/bin/teams" --version
