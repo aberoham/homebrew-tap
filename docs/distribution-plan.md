@@ -132,7 +132,8 @@ future `entra-next` entry if both channels need to be installable.
 
 1. Each source repository validates the exact tagged commit, builds the supported
    targets, and publishes archives plus checksums to its own GitHub Release.
-2. Only after successful publication does its publisher update the personal tap.
+2. The tap's own updater then reads the published release; no source repository
+   writes to the tap.
 3. Tap validation checks source allowlists, explicit version, asset names, archive
    layout and hashes; installs the package on supported runners; and runs
    `--version` and `--help` without touching live Microsoft accounts.
@@ -140,12 +141,16 @@ future `entra-next` entry if both channels need to be installable.
    all expected release assets. A GitHub prerelease badge alone proves none of this.
 
 For Teams, the fork's release workflow runs the full CI matrix, requires the tag
-to equal the `Cargo.toml` version, and refuses a tag without a prerelease suffix.
+to equal the `Cargo.toml` version, and accepts only the same three prerelease
+forms as the tap.
 Its Homebrew, Scoop, documentation and auto-tag jobs run only upstream. The tap's
-`update-teams-formula.yml` takes releases from the fork alone, accepts only
-prerelease tags, refuses to lower the version unless a tag is named explicitly,
-installs and tests the candidate on macOS Arm and Intel and Linux x86-64 and Arm,
-and only then commits. Runs are serialized to avoid competing tap updates.
+`update-teams-formula.yml` takes releases from the fork alone and accepts only
+`-alpha.N`, `-beta.N` and `-rc.N` tags, for which RubyGems and Homebrew agree
+on ordering. It refuses to lower the version unless a tag is named explicitly,
+and installs and tests the candidate on macOS Arm and Intel and Linux x86-64 and
+Arm. It commits to `main` only from `main`'s own workflow, and only if `main`'s
+formula has not changed since the candidate was prepared; otherwise the run
+fails and asks to be re-run. Runs are serialized.
 
 For Outlook, keep the two-stage build and change GoReleaser's tap destination to
 `aberoham/homebrew-tap`. Configure prerelease handling explicitly and verify the

@@ -8,7 +8,9 @@ require "tmpdir"
 class UpdateTeamsFormulaTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   SCRIPT = File.join(ROOT, "scripts/update-teams-formula.rb")
-  FORMULA = File.join(ROOT, "Formula/teams-cli.rb")
+  # A frozen copy of the inherited upstream formula, so the tests do not
+  # depend on whichever release the live formula currently publishes.
+  FORMULA = File.join(__dir__, "fixtures/teams-cli-0.2.7.rb")
   REPO = "aberoham/ms-teams-cli"
   TARGETS = %w[
     aarch64-apple-darwin
@@ -58,7 +60,25 @@ class UpdateTeamsFormulaTest < Minitest::Test
   def test_refuses_a_stable_tag
     _, err, status = run_script("v0.7.1")
     refute status.success?
-    assert_match(/expected vX\.Y\.Z-prerelease/, err)
+    assert_match(/expected vX\.Y\.Z-alpha\.N/, err)
+  end
+
+  # RubyGems and Homebrew order "pre" and "preview" differently, so labels
+  # outside alpha, beta and rc are refused rather than compared.
+  def test_refuses_prerelease_labels_outside_alpha_beta_rc
+    %w[v0.7.1-preview.1 v0.7.1-pre.1 v0.7.1-alpha v0.7.1-rc.1+build].each do |tag|
+      _, err, status = run_script(tag)
+      refute status.success?, "#{tag} was accepted"
+      assert_match(/invalid release tag/, err)
+    end
+  end
+
+  def test_accepts_beta_and_release_candidate_tags_in_order
+    %w[v0.7.1-alpha.2 v0.7.1-beta.1 v0.7.1-rc.1].each do |tag|
+      _, err, status = run_script(tag)
+      assert status.success?, "#{tag}: #{err}"
+    end
+    assert_match(/^  version "0\.7\.1-rc\.1"$/, File.read(@formula))
   end
 
   def test_refuses_the_upstream_repository

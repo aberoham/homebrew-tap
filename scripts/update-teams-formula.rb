@@ -11,9 +11,11 @@ unless ARGV.length == 4
 end
 
 # The fork channel carries prereleases only, so it can never shadow an
-# upstream stable release of the same number.
-unless tag.match?(/\Av\d+\.\d+\.\d+-[0-9A-Za-z.-]+\z/)
-  abort "invalid release tag: #{tag.inspect} (expected vX.Y.Z-prerelease)"
+# upstream stable release of the same number. Limiting the labels to alpha,
+# beta and rc keeps RubyGems' ordering, used below, identical to Homebrew's;
+# the two disagree on labels such as "pre" and "preview".
+unless tag.match?(/\Av\d+\.\d+\.\d+-(?:alpha|beta|rc)\.\d+\z/)
+  abort "invalid release tag: #{tag.inspect} (expected vX.Y.Z-alpha.N, -beta.N or -rc.N)"
 end
 
 allowed_repos = %w[aberoham/ms-teams-cli]
