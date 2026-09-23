@@ -45,6 +45,8 @@ class UpdateOlkCaskTest < Minitest::Test
     assert_includes cask,
                     "https://github.com/#{REPO}/releases/download/v\#{version}/olk_\#{version}_darwin_arm64.tar.gz"
     assert_includes cask, "com.apple.quarantine"
+    assert_includes cask, "postflight_steps do"
+    refute_match(/^\s*postflight do/, cask)
     refute_includes cask, "rlrghb"
 
     _, err, status = Open3.capture3("ruby", "-c", @cask)

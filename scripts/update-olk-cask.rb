@@ -49,11 +49,10 @@ end
 
 download = "https://github.com/#{repository}/releases/download/v\#{version}/olk_\#{version}"
 
-# The archive holds olk at its root. The binary is not notarized, so the
-# postflight removes the quarantine flag that would otherwise make Gatekeeper
-# kill it on first run, as the upstream cask does. Homebrew 7 reports
-# `postflight` as deprecated in favour of `postflight_steps`, which Homebrew 6
-# does not understand; `postflight` is kept until Homebrew 6 is out of use.
+# The archive holds olk at its root. The binary is not notarized, so a
+# postflight step removes the quarantine flag that would otherwise make
+# Gatekeeper kill it on first run. Declarative `postflight_steps` replace the
+# deprecated Ruby `postflight` block; Homebrew has run them since 6.0.13.
 cask = <<~RUBY
   cask "olk" do
     version "#{version}"
@@ -79,8 +78,8 @@ cask = <<~RUBY
 
     binary "olk"
 
-    postflight do
-      system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "\#{staged_path}/olk"]
+    postflight_steps do
+      run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{staged_path}}/olk"]
     end
   end
 RUBY

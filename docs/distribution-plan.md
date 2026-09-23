@@ -1,7 +1,7 @@
 # Personal Homebrew distribution for Teams, Outlook and Entra
 
 Updated: 2026-09-23.
-Status: current design and implementation checklist; packages are not yet published.
+Status: all three packages are published; see the status table in the README.
 
 ## Outcome
 
@@ -23,16 +23,14 @@ A Linux Outlook formula is a separate addition, not a prerequisite for this tap.
 Scoop, npm and Model Context Protocol registry publishing are outside this
 Homebrew phase.
 
-Once the corresponding entries are ready, the intended fresh-install commands are:
+Fresh installs:
 
 ```sh
-brew tap aberoham/tap
 brew install aberoham/tap/teams-cli
 brew install --cask aberoham/tap/olk
 brew install aberoham/tap/entra
 ```
 
-These are target commands, not a claim that all three packages exist today.
 Use fully qualified names to select this tap explicitly. Adding a tap alone does
 not switch an existing installation. Homebrew documents that selection in
 [its taps guide](https://docs.brew.sh/Taps). Since Homebrew 6.0.0 it
@@ -45,14 +43,11 @@ name trusts that one package, so no separate `brew trust` step is needed. See
 - The tap is a fork of OSO's tap. Its README, repository description and
   homepage have been rewritten to describe personal ownership. It contains
   21 inherited formulas, and updater workflows for Teams, Outlook and Entra.
-- The Teams formula still downloads upstream v0.2.7. The updater now reads the
-  fork's releases itself and accepts fork prereleases only, but no fork release
-  exists yet.
-- Teams `next` has been refreshed to upstream v0.7.0 plus message soft deletion,
-  at version `0.7.1-alpha.1`, pending publication. The earlier `v0.5.0-alpha.1`
-  state was never tagged.
-- Outlook is Go, with a two-stage GoReleaser build. Its configuration publishes
-  a cask to the upstream maintainer's tap. My fork is public and has no releases.
+- Teams `0.7.1-alpha.1` is published: upstream v0.7.0 plus message soft
+  deletion, released from the fork's `next` on 2026-09-23.
+- Outlook `1.14.1-alpha.1` is published: upstream main plus eight open pull
+  requests, released from the fork's `next` on 2026-09-23. It is Go, with a
+  two-stage GoReleaser build whose cask upload runs only upstream.
 - Entra is Rust, binary `entra`, published from the public
   `aberoham/ms-entra-cli`. Its release workflow builds macOS, Linux and Windows
   archives; the tap's `update-entra-formula.yml` publishes the formula.
@@ -221,3 +216,7 @@ updater generate the cask from the published release, as for Teams.
 5. Keep the three-tool status table current. Completion means all eligible tools
    install from this tap and upgrade to a subsequent release, not merely that the
    tap repository exists or an alpha tag was pushed.
+
+As of 2026-09-23 the first release of each tool is published and installs from
+this tap, which completes steps 1 and 4. Steps 2 and 3 remain open only for
+their upgrade and rollback checks, which need a second release of each tool.
