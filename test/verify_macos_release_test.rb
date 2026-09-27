@@ -31,7 +31,7 @@ class VerifyMacOSReleaseTest < Minitest::Test
         assert @commands.first.include?("--strict")
         requirement = @commands.first[@commands.first.index("-R") + 1]
         assert requirement.start_with?("=anchor apple generic"), "codesign -R needs inline requirement text"
-        assert_equal product == "olk", @commands.any? { |cmd| cmd.include?("--check-notarization") }
+        assert @commands.any? { |cmd| cmd.include?("--check-notarization") }
       end
     end
   end
@@ -39,6 +39,8 @@ class VerifyMacOSReleaseTest < Minitest::Test
   def test_rejects_invalid_signature_and_missing_notarization_ticket
     assert_raises(RuntimeError) { verify("teams", "v0.7.1-alpha.3", bad_command: "--verify") }
     assert_raises(RuntimeError) { verify("olk", "v1.14.1-alpha.2", bad_command: "--check-notarization") }
+    assert_raises(RuntimeError) { verify("entra", "v0.1.1", bad_command: "--check-notarization") }
+    assert_raises(RuntimeError) { verify("teams", "v0.7.1-alpha.3", bad_command: "--check-notarization") }
   end
 
   def test_rejects_wrong_team_and_identifier

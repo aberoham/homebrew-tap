@@ -23,11 +23,9 @@ module VerifyMacOSRelease
       ["/usr/bin/codesign", "--verify", "--strict", "--verbose=2", "-R", requirement, binary],
       ["/usr/bin/codesign", "-dvvv", binary],
     ]
-    if product == "olk"
-      # codesign's online ticket check supports a bare Mach-O executable.
-      # syspolicy_check distribution is for apps; spctl --type install is for packages.
-      commands << ["/usr/bin/codesign", "--verify", "--strict", "--check-notarization", binary]
-    end
+    # Every signed product is notarized; codesign's online ticket check supports a
+    # bare Mach-O executable, unlike syspolicy_check (apps) or spctl --type install.
+    commands << ["/usr/bin/codesign", "--verify", "--strict", "--check-notarization", binary]
     commands.each_with_index do |command, index|
       out, err, status = runner.call(*command)
       raise "#{command.first} failed: #{err}" unless status.success?
@@ -38,7 +36,7 @@ module VerifyMacOSRelease
         raise "Unexpected signing identity" unless expected.all? { |line| details.lines.map(&:chomp).include?(line) }
       end
     end
-    puts "Verified #{product} #{tag}: Developer ID identity#{product == 'olk' ? ' and notarization ticket' : ''}."
+    puts "Verified #{product} #{tag}: Developer ID identity and notarization ticket."
   end
 end
 

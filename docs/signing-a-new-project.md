@@ -11,7 +11,7 @@ This is the recipe for taking any command-line tool you write or fork and publis
 
 | Distribution path | Sign? | Notarize? |
 | --- | --- | --- |
-| Homebrew formula (`Formula/*.rb`) | Yes | Optional, but recommended if people also download the tarball directly |
+| Homebrew formula (`Formula/*.rb`) | Yes | Yes. Formula installs aren't quarantined, but direct downloads of the same tarball are, and the tap verifier requires a ticket |
 | Homebrew cask (`Casks/*.rb`) | Yes | **Required.** Otherwise Gatekeeper kills the binary, and the old fix was stripping quarantine, which we no longer do |
 | Direct download from GitHub Releases | Yes | Yes |
 
