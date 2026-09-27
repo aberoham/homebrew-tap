@@ -36,9 +36,10 @@ class Entra < Formula
       entra needs an app registration in your own Microsoft Entra ID directory.
       Setup: #{doc}/docs/auth.md
 
-      On macOS the Keychain asks again after every upgrade, because Homebrew's
-      binary is ad-hoc signed. To make "Always Allow" persist, see
-      "macOS keychain prompts after every upgrade" in
+      From 0.1.1, macOS releases are Developer ID signed, so the Keychain's
+      "Always Allow" persists across upgrades. Expect one more prompt on the
+      first upgrade from an earlier release. Do not re-sign the installed
+      binary. See "macOS keychain prompts after every upgrade" in
       #{doc}/docs/troubleshooting.md
     EOS
   end
