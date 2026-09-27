@@ -10,9 +10,9 @@ The required Team ID is `2VLHJGU477`; identifiers and inclusive cutovers are:
 | entra | com.aberoham.entra | 0.1.1 |
 | olk | com.aberoham.olk | 1.14.1-alpha.2 |
 
-olk additionally requires an online notarization ticket using
-`codesign --verify --strict --check-notarization`. Network failure or a missing
-ticket blocks publication. Its generated cask preserves quarantine from the
+Each release from its cutover also needs an online notarization ticket, checked with
+`codesign --verify --strict --check-notarization`. A network failure or missing
+ticket blocks publication. The generated olk cask keeps quarantine from the
 cutover onward. The current cask is unchanged until a candidate passes testing.
 
 Older versions intentionally remain available for explicit rollback, with the
