@@ -32,7 +32,7 @@ Afterwards check `command -v` for the tool, since an older copy elsewhere on
 ## Signed macOS releases
 
 From the cutover versions listed in `scripts/macos-release-policy.rb`, macOS binaries are
-Developer ID signed by `2VLHJGU477`, and the olk cask is also notarized. The updater
+Developer ID signed by `2VLHJGU477` and notarized by Apple. The updater
 workflows refuse to publish a release whose installed binary fails that check.
 [docs/macos-release-verification.md](docs/macos-release-verification.md) describes the gate.
 [docs/signing-a-new-project.md](docs/signing-a-new-project.md) walks through adding signing
