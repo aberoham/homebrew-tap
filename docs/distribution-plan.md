@@ -40,9 +40,9 @@ name trusts that one package, so no separate `brew trust` step is needed. See
 
 ## Current evidence
 
-- The tap is a fork of OSO's tap. Its README, repository description and
-  homepage have been rewritten to describe personal ownership. It contains
-  21 inherited formulas, and updater workflows for Teams, Outlook and Entra.
+- The tap began as a fork of OSO's tap. The inherited OSO formulas have been
+  removed; it now carries only Teams, Outlook and Entra, with updater
+  workflows for each.
 - Teams `0.7.1-alpha.1` is published: upstream v0.7.0 plus message soft
   deletion, released from the fork's `next` on 2026-09-23.
 - Outlook `1.14.1-alpha.1` is published: upstream main plus eight open pull

@@ -4,6 +4,8 @@
 # Writes Casks/olk.rb for one fork prerelease of olk. Set ALLOW_DOWNGRADE=true
 # to move the cask to a lower version, as a deliberate rollback does.
 
+require_relative "macos-release-policy"
+
 tag, repository, checksums_path, cask_path = ARGV
 
 unless ARGV.length == 4
@@ -49,10 +51,9 @@ end
 
 download = "https://github.com/#{repository}/releases/download/v\#{version}/olk_\#{version}"
 
-# The archive holds olk at its root. The binary is not notarized, so a
-# postflight step removes the quarantine flag that would otherwise make
-# Gatekeeper kill it on first run. Declarative `postflight_steps` replace the
-# deprecated Ruby `postflight` block; Homebrew has run them since 6.0.13.
+# Preserve the legacy cask form for rollback. For cutover releases the hook
+# below is removed, and both macOS test jobs must verify the notarization
+# ticket before the publish job can commit the candidate.
 cask = <<~RUBY
   cask "olk" do
     version "#{version}"
@@ -83,5 +84,9 @@ cask = <<~RUBY
     end
   end
 RUBY
+
+if MacOSReleasePolicy.signed?("olk", tag)
+  cask = cask.sub(/\n  postflight_steps do\n.*?\n  end\n/m, "\n")
+end
 
 File.write(cask_path, cask) unless File.exist?(cask_path) && File.read(cask_path) == cask
