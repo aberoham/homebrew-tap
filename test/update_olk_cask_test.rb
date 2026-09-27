@@ -61,6 +61,15 @@ class UpdateOlkCaskTest < Minitest::Test
     end
   end
 
+  def test_cutover_and_later_candidates_preserve_quarantine
+    %w[v1.14.1-alpha.2 v1.14.1-beta.1 v1.15.0-alpha.1].each do |tag|
+      _, err, status = run_script(tag)
+      assert status.success?, err
+      refute_includes File.read(@cask), "com.apple.quarantine"
+      refute_includes File.read(@cask), "postflight_steps"
+    end
+  end
+
   def test_refuses_the_upstream_repository
     _, err, status = run_script("v1.14.1-alpha.1", repo: "rlrghb/olkcli")
     refute status.success?

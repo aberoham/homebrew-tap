@@ -29,13 +29,15 @@ replace a tool already installed from another tap: uninstall that one first.
 Afterwards check `command -v` for the tool, since an older copy elsewhere on
 `PATH` can still run first.
 
-## Repository history
+## Signed macOS releases
 
-This repository began as a fork of [OSO's Homebrew tap](https://github.com/osodevops/homebrew-tap).
-Its inherited formulas remain present while their future maintenance is reviewed.
-Their presence does not make this the official OSO tap or indicate that they track
-my own releases. For OSO's official packages, use the upstream tap's instructions.
+From the cutover versions listed in `scripts/macos-release-policy.rb`, macOS binaries are
+Developer ID signed by `2VLHJGU477`, and the olk cask is also notarized. The updater
+workflows refuse to publish a release whose installed binary fails that check.
+[docs/macos-release-verification.md](docs/macos-release-verification.md) describes the gate.
+[docs/signing-a-new-project.md](docs/signing-a-new-project.md) walks through adding signing
+to another project you create or fork.
 
 ## License
 
-MIT, as declared by the upstream tap. Neither repository ships a LICENSE file.
+MIT — see [LICENSE](LICENSE).
