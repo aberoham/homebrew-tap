@@ -21,5 +21,4 @@ cask "olk" do
   end
 
   binary "olk"
-
 end

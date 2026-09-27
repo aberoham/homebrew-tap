@@ -86,7 +86,7 @@ cask = <<~RUBY
 RUBY
 
 if MacOSReleasePolicy.signed?("olk", tag)
-  cask = cask.sub(/\n  postflight_steps do\n.*?\n  end\n/m, "\n")
+  cask = cask.sub(/\n  postflight_steps do\n.*?\n  end\n/m, "")
 end
 
 File.write(cask_path, cask) unless File.exist?(cask_path) && File.read(cask_path) == cask
