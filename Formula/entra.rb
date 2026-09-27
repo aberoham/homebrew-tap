@@ -2,27 +2,27 @@ class Entra < Formula
   desc "Read-only Microsoft Entra ID directory lookups from the command line"
   homepage "https://github.com/aberoham/ms-entra-cli"
   license "MIT"
-  version "0.1.0"
+  version "0.1.1"
 
   on_macos do
     on_arm do
-      url "https://github.com/aberoham/ms-entra-cli/releases/download/v0.1.0/entra-v0.1.0-aarch64-apple-darwin.tar.gz"
-      sha256 "6e85ae86e3c7ee744ae7f49234f41258c4d298f182d7562a5d8876668c6a5833"
+      url "https://github.com/aberoham/ms-entra-cli/releases/download/v0.1.1/entra-v0.1.1-aarch64-apple-darwin.tar.gz"
+      sha256 "e7f7d7ca41b97aa984582798e6fe4050046360bd2974cd6e488f10c980e3d86d"
     end
     on_intel do
-      url "https://github.com/aberoham/ms-entra-cli/releases/download/v0.1.0/entra-v0.1.0-x86_64-apple-darwin.tar.gz"
-      sha256 "7cf2f8965de3ffd72432fd655f227e969febd011ab42af5cdc8c1ecb54232bbb"
+      url "https://github.com/aberoham/ms-entra-cli/releases/download/v0.1.1/entra-v0.1.1-x86_64-apple-darwin.tar.gz"
+      sha256 "f3c1f8e3b717a32ba8481f50d1457d45572fcedbccb0a08f0784ce89a075b557"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/aberoham/ms-entra-cli/releases/download/v0.1.0/entra-v0.1.0-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "76bc7f1f6f7f579a681c5540cfb2f7f3386b13b8025cb6ad3f71b47c7722e674"
+      url "https://github.com/aberoham/ms-entra-cli/releases/download/v0.1.1/entra-v0.1.1-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "d4bbfda22c73f19c5bf62e36a347a911f4d37bd664e874d5b94786eb48945ead"
     end
     on_intel do
-      url "https://github.com/aberoham/ms-entra-cli/releases/download/v0.1.0/entra-v0.1.0-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "7b5a5bd9f04d23dd34ffb4ea95cb4143c78c49ec263644ebc84dc644a4396725"
+      url "https://github.com/aberoham/ms-entra-cli/releases/download/v0.1.1/entra-v0.1.1-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "5186126d46943e86a83788f9797ec7bb0bb615c3136acda3a5b8e9cb9c7d0163"
     end
   end
 
