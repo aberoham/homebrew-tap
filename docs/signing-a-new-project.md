@@ -1,6 +1,6 @@
 # Shipping a new project as a signed macOS binary through this tap
 
-This is the recipe for taking any command-line tool you write or fork and publishing it here with your Apple **Developer ID** signature, and with **notarization** where it's needed. It follows the setup already used for `teams`, `entra` and `olk`, so copy from those rather than starting fresh.
+This is the recipe for taking any command-line tool you write or fork and publishing it here signed with your Apple **Developer ID** and **notarized** by Apple, as `teams`, `entra` and `olk` are. It follows the setup already used for `teams`, `entra` and `olk`, so copy from those rather than starting fresh.
 
 ## The terms, briefly
 
@@ -64,7 +64,7 @@ The signing job, adapted from Entra:
     # Defense in depth; the environment reviewer and tag ruleset are the boundary.
     if: github.repository_owner_id == 586805 && github.actor == 'aberoham' && github.triggering_actor == 'aberoham'
     environment: release
-    timeout-minutes: 15            # olk-style notarization: 105
+    timeout-minutes: 60            # one notarization wait (up to 45m) per architecture
     strategy:
       matrix:
         target: [aarch64-apple-darwin, x86_64-apple-darwin]
@@ -85,8 +85,11 @@ The signing job, adapted from Entra:
           MACOS_SIGNING_IDENTITY: ${{ vars.MACOS_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
         run: python3 .github/scripts/macos-signing.py prepare
-      - name: Sign (and notarize) the packaged binary
-        # For notarization, add the three APPLE_NOTARY_* values here (see step 5) and pass --notarize.
+      - name: Sign, notarize and verify the packaged binary
+        env:
+          APPLE_NOTARY_KEY_P8_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
+          APPLE_NOTARY_KEY_ID: ${{ vars.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ vars.APPLE_NOTARY_ISSUER_ID }}
         shell: bash
         run: |
           set -euo pipefail
@@ -94,7 +97,7 @@ The signing job, adapted from Entra:
           unpacked="$RUNNER_TEMP/signed-package"
           mkdir -p "$unpacked"
           tar xzf "${package}.tar.gz" -C "$unpacked"
-          python3 .github/scripts/macos-signing.py sign "$unpacked/$package/bin/NAME" com.aberoham.NAME
+          python3 .github/scripts/macos-signing.py sign "$unpacked/$package/bin/NAME" com.aberoham.NAME --notarize
           tar czf "${package}.tar.gz" -C "$unpacked" "$package"
       - uses: actions/upload-artifact@<full-sha>
         with:
@@ -136,7 +139,7 @@ op read "op://<VAULT>/<P12_PASSWORD_ITEM>/password" | gh secret set MACOS_CERTIF
 gh variable set MACOS_SIGNING_IDENTITY --env release -R $R -b 1262E82DFBF51C7712475B9E2E0D0E589DEF5DAB
 gh variable set APPLE_TEAM_ID --env release -R $R -b 2VLHJGU477
 
-# Only if this project notarizes (casks or direct downloads)
+# Notarization key (every project notarizes)
 op document get <NOTARY_KEY_ITEM> | base64 | tr -d '\n' | gh secret set APPLE_NOTARY_KEY_P8_BASE64 --env release -R $R
 gh variable set APPLE_NOTARY_KEY_ID --env release -R $R -b 5QHQNSU465
 gh variable set APPLE_NOTARY_ISSUER_ID --env release -R $R -b 98ea42bb-746a-43fb-9374-327d0360f6d5
@@ -174,7 +177,7 @@ The environment reviewer means every signing run waits for you to click **Approv
 
 Never put these secrets at repository or organization level, and never in this tap.
 
-### 5. Notarization (casks and direct downloads)
+### 5. Notarization
 
 - Pass `--notarize` to `macos-signing.py sign`, and give **only that step** `APPLE_NOTARY_KEY_P8_BASE64`, `APPLE_NOTARY_KEY_ID` and `APPLE_NOTARY_ISSUER_ID`. The helper submits, waits up to 45 minutes, and fails unless Apple returns `Accepted`.
 - Raise the job timeout to cover two waits, as olk does.
@@ -182,7 +185,7 @@ Never put these secrets at repository or organization level, and never in this t
 ### 6. Tap side
 
 1. Add the formula or cask, and an updater workflow copied from `update-entra-formula.yml` (formula) or `update-olk-cask.yml` (cask).
-2. Add the project to `MacOSReleasePolicy::CUTOVERS` in `scripts/macos-release-policy.rb`: the first signed version and the identifier. Releases from that version on must pass `scripts/verify-macos-release.rb` on both macOS runners before the updater can publish. Add a `--check-notarization` case to the verifier for casks, as olk has.
+2. Add the project to `MacOSReleasePolicy::CUTOVERS` in `scripts/macos-release-policy.rb`: the first signed version and the identifier. Releases from that version on must pass `scripts/verify-macos-release.rb` on both macOS runners before the updater can publish. The verifier checks the Developer ID identity and the notarization ticket for every product.
 3. Casks: **don't** add a quarantine-stripping `postflight` for signed and notarized releases.
 4. Extend `test/verify_macos_release_test.rb` for the new product and run `ruby test/*.rb`.
 
@@ -192,7 +195,7 @@ Never put these secrets at repository or organization level, and never in this t
 b="$(realpath "$(brew --prefix)/bin/NAME")"
 codesign --verify --strict --verbose=2 "$b"
 codesign -dvvv "$b" 2>&1 | grep -E '^(Identifier|TeamIdentifier|Authority|Timestamp)|runtime'
-codesign --verify --strict --check-notarization "$b"   # notarized projects
+codesign --verify --strict --check-notarization "$b"
 ```
 
 Expect `Identifier=com.aberoham.NAME`, `TeamIdentifier=2VLHJGU477`, the three Authority lines, a timestamp, and `flags=0x10000(runtime)`. A fresh install should never prompt: the Keychain item the tool creates already trusts the tool's signature, so later signed upgrades read it silently. Check that by upgrading to the next signed release. The only prompt is one-time, for items written by an earlier unsigned or differently signed build; choose **Always Allow** and it won't return.
