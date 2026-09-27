@@ -66,6 +66,7 @@ class UpdateOlkCaskTest < Minitest::Test
       _, err, status = run_script(tag)
       assert status.success?, err
       refute_includes File.read(@cask), "com.apple.quarantine"
+      assert_includes File.read(@cask), "  binary \"olk\"\nend\n"
       refute_includes File.read(@cask), "postflight_steps"
     end
   end
