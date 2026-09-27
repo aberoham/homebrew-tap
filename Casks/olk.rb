@@ -1,13 +1,13 @@
 cask "olk" do
-  version "1.14.1-alpha.1"
+  version "1.14.1-alpha.2"
 
   on_macos do
     on_arm do
-      sha256 "34c5a18d138a835f47df2272d6b8ea29b7e971a9dbeded1062a679fdbd9f4833"
+      sha256 "c6a7a082585b0b6d974b49a618917f9fba7112b1e0ecfb30f614745e7b45afbd"
       url "https://github.com/aberoham/olkcli/releases/download/v#{version}/olk_#{version}_darwin_arm64.tar.gz"
     end
     on_intel do
-      sha256 "621bb87263f9ef4b1761b2d2d402b1ad16159d5c0dd67691e482a2b374a31c6c"
+      sha256 "fe7e084f35db6c7fb7b75fec94d4f28306a7c94c4a551723bf1e34088d44b2f3"
       url "https://github.com/aberoham/olkcli/releases/download/v#{version}/olk_#{version}_darwin_amd64.tar.gz"
     end
   end
@@ -22,7 +22,4 @@ cask "olk" do
 
   binary "olk"
 
-  postflight_steps do
-    run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{staged_path}}/olk"]
-  end
 end
