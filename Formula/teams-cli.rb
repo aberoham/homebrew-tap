@@ -2,27 +2,27 @@ class TeamsCli < Formula
   desc "Microsoft Teams CLI for AI agents and automation"
   homepage "http://msteamscli.com/"
   license "MIT"
-  version "0.7.1-alpha.2"
+  version "0.7.1-alpha.3"
 
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.2/teams-v0.7.1-alpha.2-aarch64-apple-darwin.tar.gz"
-      sha256 "f254ff381d67ee9fd6eaf8313a0d0a07f300c10fb292975a565c6220db67b883"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.3/teams-v0.7.1-alpha.3-aarch64-apple-darwin.tar.gz"
+      sha256 "4ab1277467325ba99ffc6fea46a32d5e91a24a5cb30187ba2b84f8e437bf381a"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.2/teams-v0.7.1-alpha.2-x86_64-apple-darwin.tar.gz"
-      sha256 "054e5cb0448dab67f2a6e106b7c930ef13fba80af5ec026fe0143621aeb396fc"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.3/teams-v0.7.1-alpha.3-x86_64-apple-darwin.tar.gz"
+      sha256 "d4ab6c51ad1cb5720dd2e5c1d1ef9f1c66bf8ad9a51b5996d1e06af627a3aad1"
     end
   end
 
   if OS.linux?
     if Hardware::CPU.arm?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.2/teams-v0.7.1-alpha.2-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "340faa9022b41416f24481ac4e7aea6e6f826d0f3dcca306db6a956ec2df9ee7"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.3/teams-v0.7.1-alpha.3-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "b0a366cf45fe8f87b45f521b5b1bc4b269e741148c4d12a0d2798d831e0cdd4e"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.2/teams-v0.7.1-alpha.2-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "5bf86b34a0af50365b28c0e90b0b24ff28ea23702d18bbe9e2b0e8acee7e484f"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.3/teams-v0.7.1-alpha.3-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "7634f1b6f043ee38548a5a4a53b7ddb079c4fbf3db2c8cefce24d3156b14786d"
     end
   end
 
