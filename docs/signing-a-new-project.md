@@ -19,9 +19,9 @@ This is the recipe for taking any command-line tool you write or fork and publis
 
 | Thing | Where |
 | --- | --- |
-| Certificate, private key, `.p12` bundle | 1Password items: bundle `piyhtws76zh2twlhilvcc3xltq`, bundle password `bjchg3mchtlmkrrleqztelr6x4`, public certificate `d3tdq47mhio7lu4w5fski53p6y` (these are item IDs, not secrets) |
+| Certificate, private key, `.p12` bundle | Password vault: the `.p12` bundle, its password, and the public certificate are stored there as separate items |
 | Signing identity (SHA-1) | `1262E82DFBF51C7712475B9E2E0D0E589DEF5DAB`, Team ID `2VLHJGU477`, expires **2031-09-17** |
-| Notarization API key (team key) | 1Password item `bnwlj67zj3suxdpjnix3hhciay`, Key ID `5QHQNSU465`, Issuer `98ea42bb-746a-43fb-9374-327d0360f6d5` |
+| Notarization API key (team key) | Password vault (the `.p8` key file), Key ID `5QHQNSU465`, Issuer `98ea42bb-746a-43fb-9374-327d0360f6d5` |
 | Signing helper and tests | `aberoham/ms-entra-cli`: `.github/scripts/macos-signing.py`, `.github/scripts/test_macos_signing.py` |
 | Apple's public G2 intermediate | `.github/certificates/DeveloperIDG2CA.pem` in any of the three repos (the source is https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer) |
 | Reference workflows | Rust tarballs: `ms-entra-cli/.github/workflows/release.yml`. GoReleaser with notarization: `olkcli/.github/workflows/release.yml` |
@@ -133,14 +133,15 @@ for p in 'v*.*.*-alpha.*' 'v*.*.*-beta.*' 'v*.*.*-rc.*'; do   # original project
   gh api --method POST repos/$R/environments/release/deployment-branch-policies -f name="$p" -f type=tag
 done
 
-# Secrets and variables, piped straight from the secret store so nothing is written to disk
-op document get piyhtws76zh2twlhilvcc3xltq | base64 | tr -d '\n' | gh secret set MACOS_CERTIFICATE_P12_BASE64 --env release -R $R
-op read "op://Moses Shared/bjchg3mchtlmkrrleqztelr6x4/password" | gh secret set MACOS_CERTIFICATE_PASSWORD --env release -R $R
+# Secrets and variables, piped straight from the password vault so nothing is written to disk.
+# Replace each <...> placeholder with the matching vault item reference.
+op document get <P12_BUNDLE_ITEM> | base64 | tr -d '\n' | gh secret set MACOS_CERTIFICATE_P12_BASE64 --env release -R $R
+op read "<P12_PASSWORD_REFERENCE>" | gh secret set MACOS_CERTIFICATE_PASSWORD --env release -R $R
 gh variable set MACOS_SIGNING_IDENTITY --env release -R $R -b 1262E82DFBF51C7712475B9E2E0D0E589DEF5DAB
 gh variable set APPLE_TEAM_ID --env release -R $R -b 2VLHJGU477
 
 # Notarization key (every project notarizes)
-op document get bnwlj67zj3suxdpjnix3hhciay | base64 | tr -d '\n' | gh secret set APPLE_NOTARY_KEY_P8_BASE64 --env release -R $R
+op document get <NOTARY_KEY_ITEM> | base64 | tr -d '\n' | gh secret set APPLE_NOTARY_KEY_P8_BASE64 --env release -R $R
 gh variable set APPLE_NOTARY_KEY_ID --env release -R $R -b 5QHQNSU465
 gh variable set APPLE_NOTARY_ISSUER_ID --env release -R $R -b 98ea42bb-746a-43fb-9374-327d0360f6d5
 ```
