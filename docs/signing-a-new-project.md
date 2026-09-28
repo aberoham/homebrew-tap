@@ -4,7 +4,7 @@ This is the recipe for taking any command-line tool you write or fork and publis
 
 ## The terms, briefly
 
-- **Code signing (Developer ID):** `codesign` stamps the binary with Abe's certificate, `Developer ID Application: ABRAHAM ABEL INGERSOLL (2VLHJGU477)`. macOS can then tell it comes from the real aberoham, and that it hasn't changed since. A **stable identifier** (for example `com.aberoham.entra`) plus the same certificate lets Keychain "Always Allow" grants survive upgrades.
+- **Code signing (Developer ID):** `codesign` stamps the binary with your certificate, `Developer ID Application: ABRAHAM ABEL INGERSOLL (2VLHJGU477)`. macOS can then tell it comes from the real aberoham, and that it hasn't changed since. A **stable identifier** (for example `com.aberoham.entra`) plus the same certificate lets Keychain "Always Allow" grants survive upgrades.
 - **Hardened runtime and timestamp:** both are required for notarization. The shared helper always adds them.
 - **Notarization:** Apple scans the signed binary and records a ticket. Gatekeeper checks that ticket, online for a bare CLI, when a file carries the `com.apple.quarantine` flag. **Casks** and browser downloads get that flag; Homebrew **formulae** do not. A bare Mach-O file can't have the ticket stapled to it.
 - There's no separate "attestation" step for this. Developer ID signing plus notarization is the whole thing.
@@ -19,9 +19,9 @@ This is the recipe for taking any command-line tool you write or fork and publis
 
 | Thing | Where |
 | --- | --- |
-| Certificate, private key, `.p12` bundle | see bundle `<P12_BUNDLE_ITEM>`, password `<P12_PASSWORD_ITEM>`, public certificate `<PUBLIC_CERTIFICATE_ITEM>` |
+| Certificate, private key, `.p12` bundle | Password vault: the `.p12` bundle, its password, and the public certificate are stored there as separate items |
 | Signing identity (SHA-1) | `1262E82DFBF51C7712475B9E2E0D0E589DEF5DAB`, Team ID `2VLHJGU477`, expires **2031-09-17** |
-| Notarization API key (team key) | see item `<NOTARY_KEY_ITEM>`, Key ID `5QHQNSU465`, Issuer `98ea42bb-746a-43fb-9374-327d0360f6d5` |
+| Notarization API key (team key) | Password vault (the `.p8` key file), Key ID `5QHQNSU465`, Issuer `98ea42bb-746a-43fb-9374-327d0360f6d5` |
 | Signing helper and tests | `aberoham/ms-entra-cli`: `.github/scripts/macos-signing.py`, `.github/scripts/test_macos_signing.py` |
 | Apple's public G2 intermediate | `.github/certificates/DeveloperIDG2CA.pem` in any of the three repos (the source is https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer) |
 | Reference workflows | Rust tarballs: `ms-entra-cli/.github/workflows/release.yml`. GoReleaser with notarization: `olkcli/.github/workflows/release.yml` |
@@ -34,7 +34,7 @@ Don't make a new certificate per project. Apple limits how many Developer ID cer
 ### 1. Repository hygiene (forks especially)
 
 1. Look at the fork relationship (`gh api repos/aberoham/NAME --jq .parent.full_name`). Treat upstream workflows as untrusted.
-2. List every workflow in `.github/workflows/`. For anything that pushes tags, publishes, or uses upstream secrets such as tap tokens, dispatch tokens or PATs, either delete it from your fork or guard it with `if: github.repository == 'upstream/NAME'`. Then disable it in the Actions tab anyway.
+2. List every workflow in `.github/workflows/`. For anything that pushes tags, publishes, or uses upstream secrets such as tap tokens, dispatch tokens or personal access tokens, either delete it from your fork or guard it with `if: github.repository == 'upstream/NAME'`. Then disable it in the Actions tab anyway.
 3. Choose your integration branch and tag scheme. Forks should publish only `vX.Y.Z-alpha.N`, `-beta.N` or `-rc.N`, so they never shadow an upstream stable version. Copy the `verify-tag` job from Teams or olk.
 
 ### 2. Add the signing pieces to the source repo
@@ -64,7 +64,7 @@ The signing job, adapted from Entra:
     # Defense in depth; the environment reviewer and tag ruleset are the boundary.
     if: github.repository_owner_id == 586805 && github.actor == 'aberoham' && github.triggering_actor == 'aberoham'
     environment: release
-    timeout-minutes: 60            # one notarization wait (up to 45m) per architecture
+    timeout-minutes: 60            # each matrix job waits once for notarization (up to 45m)
     strategy:
       matrix:
         target: [aarch64-apple-darwin, x86_64-apple-darwin]
@@ -119,7 +119,7 @@ Rules that matter:
 
 ### 4. GitHub settings (you run these; an agent can't)
 
-Replace `NAME` with the repo name and `PATTERNS` with the tag patterns.
+Replace `NAME` with the repo name. The tag patterns below suit a fork; an original project uses `v*`.
 
 ```bash
 R=aberoham/NAME
@@ -133,9 +133,10 @@ for p in 'v*.*.*-alpha.*' 'v*.*.*-beta.*' 'v*.*.*-rc.*'; do   # original project
   gh api --method POST repos/$R/environments/release/deployment-branch-policies -f name="$p" -f type=tag
 done
 
-# Secrets and variables, piped straight from the secret store so nothing is written to disk
+# Secrets and variables, piped straight from the password vault so nothing is written to disk.
+# Replace each <...> placeholder with the matching vault item reference.
 op document get <P12_BUNDLE_ITEM> | base64 | tr -d '\n' | gh secret set MACOS_CERTIFICATE_P12_BASE64 --env release -R $R
-op read "op://<VAULT>/<P12_PASSWORD_ITEM>/password" | gh secret set MACOS_CERTIFICATE_PASSWORD --env release -R $R
+op read "<P12_PASSWORD_REFERENCE>" | gh secret set MACOS_CERTIFICATE_PASSWORD --env release -R $R
 gh variable set MACOS_SIGNING_IDENTITY --env release -R $R -b 1262E82DFBF51C7712475B9E2E0D0E589DEF5DAB
 gh variable set APPLE_TEAM_ID --env release -R $R -b 2VLHJGU477
 
@@ -168,7 +169,7 @@ gh api --method POST repos/$R/rulesets --input - <<'JSON'
  "conditions":{"ref_name":{"include":["refs/heads/main"],"exclude":[]}},
  "rules":[{"type":"update","parameters":{"update_allows_fetch_and_merge":false}}]}
 JSON
-# Require SHA-pinned actions and approval for outside contributors' PR runs
+# Require SHA-pinned actions and approval for outside contributors' pull request runs
 gh api --method PUT repos/$R/actions/permissions -F enabled=true -f allowed_actions=all -F sha_pinning_required=true
 gh api --method PUT repos/$R/actions/permissions/fork-pr-contributor-approval -f approval_policy=all_external_contributors
 ```
@@ -180,14 +181,14 @@ Never put these secrets at repository or organization level, and never in this t
 ### 5. Notarization
 
 - Pass `--notarize` to `macos-signing.py sign`, and give **only that step** `APPLE_NOTARY_KEY_P8_BASE64`, `APPLE_NOTARY_KEY_ID` and `APPLE_NOTARY_ISSUER_ID`. The helper submits, waits up to 45 minutes, and fails unless Apple returns `Accepted`.
-- Raise the job timeout to cover two waits, as olk does.
+- The matrix template above signs one architecture per job, so 60 minutes covers its single wait. A job that signs both architectures in sequence waits twice and needs a longer timeout; olk's single signing job uses 105 minutes.
 
 ### 6. Tap side
 
 1. Add the formula or cask, and an updater workflow copied from `update-entra-formula.yml` (formula) or `update-olk-cask.yml` (cask).
 2. Add the project to `MacOSReleasePolicy::CUTOVERS` in `scripts/macos-release-policy.rb`: the first signed version and the identifier. Releases from that version on must pass `scripts/verify-macos-release.rb` on both macOS runners before the updater can publish. The verifier checks the Developer ID identity and the notarization ticket for every product.
 3. Casks: **don't** add a quarantine-stripping `postflight` for signed and notarized releases.
-4. Extend `test/verify_macos_release_test.rb` for the new product and run `ruby test/*.rb`.
+4. Extend `test/verify_macos_release_test.rb` for the new product and run every test file: `for t in test/*_test.rb; do ruby "$t"; done`. A bare `ruby test/*.rb` runs only the first file.
 
 ### 7. First signed release: verify it yourself
 
