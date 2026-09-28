@@ -1,6 +1,6 @@
 # Personal Homebrew distribution for Teams, Outlook and Entra
 
-Updated: 2026-09-23.
+Updated: 2026-09-28.
 Status: all three packages are published; see the status table in the README.
 
 ## Outcome
@@ -43,23 +43,26 @@ name trusts that one package, so no separate `brew trust` step is needed. See
 - The tap began as a fork of OSO's tap. The inherited OSO formulas have been
   removed; it now carries only Teams, Outlook and Entra, with updater
   workflows for each.
-- Teams `0.7.1-alpha.1` is published: upstream v0.7.0 plus message soft
-  deletion, released from the fork's `next` on 2026-09-23.
-- Outlook `1.14.1-alpha.1` is published: upstream main plus eight open pull
-  requests, released from the fork's `next` on 2026-09-23. It is Go, with a
-  two-stage GoReleaser build whose cask upload runs only upstream.
+- Teams is Rust, released as prereleases from the fork's `next`, which carries
+  upstream plus selected pull requests.
+- Outlook is Go, released as prereleases from the fork's `next`, which carries
+  upstream main plus selected open pull requests. GoReleaser builds the
+  archives but no longer publishes anything; see the Outlook paragraph below.
 - Entra is Rust, binary `entra`, published from the public
   `aberoham/ms-entra-cli`. Its release workflow builds macOS, Linux and Windows
   archives; the tap's `update-entra-formula.yml` publishes the formula.
+- Every macOS binary is Developer ID signed and notarized from a per-tool
+  cutover release onward. Earlier releases predate the cutover and remain
+  unsigned. See [macOS release verification](macos-release-verification.md).
+- The versions currently published are the ones in `Formula/` and `Casks/`.
 
 ## Ownership and maintenance
 
 Retain `aberoham/homebrew-tap`: the existing address is suitable and does not
 require a new repository merely because it was created as a fork. Rebrand it as
-personal, credit inherited code, and stop describing inherited formulas as tools
-I actively support. Audit their consumers before removing them; removal is not
-needed to onboard these three tools. Do not blindly synchronize the upstream tap
-in future, as that could undo package URLs, branding and workflows.
+personal and credit inherited code; this is done, and the inherited formulas
+have been removed. Do not blindly synchronize the upstream tap in future, as
+that could undo package URLs, branding and workflows.
 
 Keep the shared distribution guide in the tap. Keep build details in each source
 repository. Each tool releases independently, so an Outlook build failure cannot
@@ -133,14 +136,17 @@ future `entra-next` entry if both channels need to be installable.
    layout and hashes; installs the package on supported runners; and runs the
    tool's version and help commands (`teams --version`, `olk version`,
    `entra version`) without touching live Microsoft accounts. The reported
-   version must match the release exactly.
+   version must match the release exactly. On macOS, releases from each tool's
+   signing cutover must also pass the Developer ID and notarization check in
+   `scripts/verify-macos-release.rb` before the binary is run.
 4. Publish the recipe only after checks pass. Confirm the committed recipe matches
    all expected release assets. A GitHub prerelease badge alone proves none of this.
 
 For Teams, the fork's release workflow runs the full CI matrix, requires the tag
 to equal the `Cargo.toml` version, and accepts only the same three prerelease
 forms as the tap.
-Its Homebrew, Scoop, documentation and auto-tag jobs run only upstream. The tap's
+Its Homebrew, Scoop and documentation jobs run only upstream, and `next` has no
+auto-tag workflow. The tap's
 `update-teams-formula.yml` takes releases from the fork alone and accepts only
 `-alpha.N`, `-beta.N` and `-rc.N` tags, for which RubyGems and Homebrew agree
 on ordering. It refuses to lower the version unless a tag is named explicitly,
@@ -149,23 +155,24 @@ Arm. It commits to `main` only from `main`'s own workflow, and only if `main`'s
 formula has not changed since the candidate was prepared; otherwise the run
 fails and asks to be re-run. Runs are serialized.
 
-For Outlook, the fork keeps the two-stage build. GoReleaser still renders the
-cask but uploads it only from `rlrghb/olkcli`, so the fork holds no tap
-credential. The fork's release runs CI first, accepts the same three prerelease
-forms, and marks them as GitHub prereleases. The tap's `update-olk-cask.yml`
+For Outlook, the fork's release runs CI first and accepts the same three
+prerelease forms. GoReleaser builds the Linux and Windows archives in one job
+and the macOS archives in another, with publishing skipped in both. A third job
+signs and notarizes the macOS binaries, and a final job without Apple
+credentials writes `checksums.txt` over the signed archives and creates the
+GitHub prerelease with `gh release create`. GoReleaser therefore uploads no
+cask, and the fork holds no tap credential. The tap's `update-olk-cask.yml`
 writes `Casks/olk.rb` from the release's `checksums.txt` under the same rules as
 the Teams updater, and installs and runs the candidate on macOS Arm and Intel
 before committing. The existing Go module path stays, for version ldflags. npm
 and Model Context Protocol registry publishing stay off on the fork because its
 `PUBLISH_NPM` variable is unset.
-[GoReleaser cask configuration](https://goreleaser.com/customization/publish/homebrew_casks/)
-and [release configuration](https://goreleaser.com/customization/publish/scm/)
-are separate settings.
 
 For Entra, the release workflow runs CI, requires the tag to equal the
 `Cargo.toml` version, and marks a release as a prerelease only when its version
 carries a hyphen. It builds all five targets natively, including Arm Linux on
-GitHub's Arm runner, and runs each packaged binary before publishing. The tap's
+GitHub's Arm runner, and runs each packaged binary before the macOS binaries
+are signed and notarized. The tap's
 `update-entra-formula.yml` mirrors the Teams updater, with two differences. It
 accepts stable tags, and its unattended run takes only the newest stable
 release; a prerelease reaches the formula only when named. It compares versions
@@ -181,6 +188,12 @@ generally does not trigger another push workflow. Keep manual tag pushes or
 explicitly design workflow dispatch/reuse. See
 [GitHub's trigger documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
+The Apple signing certificate and notarization key are the one exception to
+short-lived credentials. They are stored only in each source repository's
+`release` environment, which requires my approval for every run and admits only
+release tags. They never reach the tap. See
+[Shipping a new project as a signed macOS binary](signing-a-new-project.md).
+
 The tap updater needs only public release URLs plus a push to its own repository,
 which its own `GITHUB_TOKEN` already permits, so no source repository triggers it
 or holds a credential for it. It runs once each weekday at 09:17 UTC and picks
@@ -188,20 +201,16 @@ up the newest fork release. It can also be run at once, optionally naming a tag:
 
     gh workflow run update-teams-formula.yml --repo aberoham/homebrew-tap -f tag=v0.7.1-alpha.1
 
-The Entra updater runs the same way, at 09:47 UTC, from
-`update-entra-formula.yml`.
+The Entra and Outlook updaters run the same way, at 09:47 UTC, from
+`update-entra-formula.yml` and `update-olk-cask.yml`.
 
 A public repository's scheduled workflows are disabled after 60 days without
 repository activity; GitHub's notice email is the prompt to re-enable them.
 
-Outlook's GoReleaser cask publisher expects a `TAP_GITHUB_TOKEN` secret with write
-access to the tap. Leave that publisher disabled on the fork and have a tap
-updater generate the cask from the published release, as for Teams.
-
 ## Implementation sequence and acceptance
 
 1. Rebrand the existing tap, add this guide, and make its current incomplete state
-   visible. Preserve inherited formulas pending a separate inventory decision.
+   visible. The inherited formulas have since been removed.
 2. Repair Teams `next`, validate on all three CI operating systems, remove the
    stored `HOMEBREW_TAP_TOKEN` from the fork, and publish one current prerelease.
    Verify all four Homebrew architecture URLs and hashes, installation, upgrade
@@ -217,6 +226,7 @@ updater generate the cask from the published release, as for Teams.
    install from this tap and upgrade to a subsequent release, not merely that the
    tap repository exists or an alpha tag was pushed.
 
-As of 2026-09-23 the first release of each tool is published and installs from
-this tap, which completes steps 1 and 4. Steps 2 and 3 remain open only for
-their upgrade and rollback checks, which need a second release of each tool.
+Steps 1 and 4 are complete. Each tool now has a later, signed release in the
+tap, but the updater workflows test fresh installs only. Steps 2 and 3 stay
+open until an upgrade from the first release, and a rollback to it, have been
+checked on a real machine.

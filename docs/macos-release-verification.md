@@ -13,7 +13,7 @@ The required Team ID is `2VLHJGU477`; identifiers and inclusive cutovers are:
 Each release from its cutover also needs an online notarization ticket, checked with
 `codesign --verify --strict --check-notarization`. A network failure or missing
 ticket blocks publication. The generated olk cask keeps quarantine from the
-cutover onward. The current cask is unchanged until a candidate passes testing.
+cutover onward.
 
 Older versions intentionally remain available for explicit rollback, with the
 legacy olk quarantine hook preserved. Scheduled updates cannot downgrade the
