@@ -1,28 +1,28 @@
 class TeamsCliNext < Formula
   desc "Microsoft Teams CLI for AI agents and automation (fork prereleases)"
   homepage "http://msteamscli.com/"
-  version "0.7.1-alpha.3"
+  version "0.8.1-alpha.1"
   license "MIT"
 
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.3/teams-v0.7.1-alpha.3-aarch64-apple-darwin.tar.gz"
-      sha256 "4ab1277467325ba99ffc6fea46a32d5e91a24a5cb30187ba2b84f8e437bf381a"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.8.1-alpha.1/teams-v0.8.1-alpha.1-aarch64-apple-darwin.tar.gz"
+      sha256 "2d9184f419d20f42d4f3d05d8ac14211fd15d26da5ac2d3cf407e05c998ad868"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.3/teams-v0.7.1-alpha.3-x86_64-apple-darwin.tar.gz"
-      sha256 "d4ab6c51ad1cb5720dd2e5c1d1ef9f1c66bf8ad9a51b5996d1e06af627a3aad1"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.8.1-alpha.1/teams-v0.8.1-alpha.1-x86_64-apple-darwin.tar.gz"
+      sha256 "837e6c1afaeae781c49611b54af0b0341154fc4e0b2aee96585853c633feb2d4"
     end
   end
 
   if OS.linux?
     if Hardware::CPU.arm?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.3/teams-v0.7.1-alpha.3-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "b0a366cf45fe8f87b45f521b5b1bc4b269e741148c4d12a0d2798d831e0cdd4e"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.8.1-alpha.1/teams-v0.8.1-alpha.1-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "bf07173d853e9bf8849f57a7514cee52e39fcb881078f2efb2a08cda0252b4c5"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.7.1-alpha.3/teams-v0.7.1-alpha.3-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "7634f1b6f043ee38548a5a4a53b7ddb079c4fbf3db2c8cefce24d3156b14786d"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/v0.8.1-alpha.1/teams-v0.8.1-alpha.1-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "d04a4de51e6692d428e1900807b60060e85a1b38c32dae6b2320bd3ba773cfaa"
     end
   end
 
