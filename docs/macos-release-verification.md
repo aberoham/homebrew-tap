@@ -26,7 +26,8 @@ access to this tap could otherwise bypass the updater by editing recipes.
 
 Both Teams formulas use the same gate. For `teams-cli` the version checked is
 upstream's `vX.Y.Z`, not the `upstream-vX.Y.Z` release tag, because that is
-what the binary reports. Teams releases from 0.8.0 on also carry build
-provenance attestations, and the test jobs run `gh attestation verify` on the
-downloaded archive before publishing; earlier tags remain installable for
-rollbacks without that check.
+what the binary reports. Every mirrored `teams-cli` release, and every
+`teams-cli-next` release from 0.8.1-alpha.1, also carries a build provenance
+attestation. The test jobs run `gh attestation verify` on the downloaded
+archive before publishing, requiring the fork's `release.yml` as the signer;
+older fork prereleases remain installable for rollbacks without that check.

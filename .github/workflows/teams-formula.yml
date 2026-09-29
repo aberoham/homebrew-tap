@@ -33,9 +33,11 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+      attestations: read # verify a mirrored release's source manifest
     outputs:
       tag: ${{ steps.release.outputs.tag }}
       version_tag: ${{ steps.release.outputs.version_tag }}
+      attestation: ${{ steps.release.outputs.attestation }}
       changed: ${{ steps.formula.outputs.changed }}
       base: ${{ steps.formula.outputs.base }}
     steps:
@@ -45,12 +47,17 @@ jobs:
           persist-credentials: false
 
       - name: Test the updater
-        run: ruby test/update_teams_formula_test.rb
+        run: |
+          ruby test/teams_channel_test.rb
+          ruby test/update_teams_formula_test.rb
 
       # A named tag may move the formula to any release of its channel, which
       # is how a bad release is rolled back. The unattended default only moves
       # up, and considers only the channel's own tags: the fork publishes both
       # channels, so its newest release overall may belong to the other one.
+      # scripts/teams_channel.rb holds each channel's tag rule. The default is
+      # the channel's highest version among all published releases, read in
+      # full, so the other channel's releases and listing order do not matter.
       - name: Choose release
         id: release
         env:
@@ -59,34 +66,58 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$CHANNEL" == stable ]]; then
-            pattern='^upstream-v[0-9]+\.[0-9]+\.[0-9]+$'
-          elif [[ "$CHANNEL" == next ]]; then
-            pattern='^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$'
-          else
-            echo "Unknown channel ${CHANNEL}" >&2
-            exit 1
-          fi
           if [[ -n "$REQUESTED_TAG" ]]; then
             tag="$REQUESTED_TAG"
             allow_downgrade=true
           else
-            tag="$(gh release list --repo "$RELEASE_REPOSITORY" --exclude-drafts \
-              --limit 100 --json tagName \
-              --jq "[.[].tagName | select(test(\"${pattern}\"))][0] // \"\"")"
+            tag="$(gh api --paginate "repos/${RELEASE_REPOSITORY}/releases?per_page=100" \
+              --jq '.[] | select(.draft | not) | .tag_name' |
+              ruby scripts/teams_channel.rb newest "$CHANNEL")"
             allow_downgrade=false
           fi
           if [[ -z "$tag" ]]; then
             echo "No published ${CHANNEL} release in ${RELEASE_REPOSITORY}"
-          elif [[ ! "$tag" =~ $pattern ]]; then
-            echo "Refusing ${tag}: not a ${CHANNEL} release tag" >&2
-            exit 1
+            version_tag=""
+            attestation=""
+          else
+            version_tag="$(ruby scripts/teams_channel.rb version-tag "$CHANNEL" "$tag")"
+            attestation="$(ruby scripts/teams_channel.rb attested "$CHANNEL" "$tag")"
           fi
           {
             echo "tag=${tag}"
-            echo "version_tag=${tag#upstream-}"
+            echo "version_tag=${version_tag}"
+            echo "attestation=${attestation}"
             echo "allow_downgrade=${allow_downgrade}"
           } >> "$GITHUB_OUTPUT"
+
+      # A mirrored release's attestation names the fork's workflow, not the
+      # source it built. Its source manifest, attested with the archives,
+      # names that source; it must be upstream's commit for the same tag.
+      - name: Check the mirrored source
+        if: steps.release.outputs.tag != '' && env.CHANNEL == 'stable'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION_TAG: ${{ steps.release.outputs.version_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="${RUNNER_TEMP}/teams-${VERSION_TAG}-source.txt"
+          curl --fail --location --silent --show-error --retry 5 --retry-all-errors \
+            "https://github.com/${RELEASE_REPOSITORY}/releases/download/${TAG}/teams-${VERSION_TAG}-source.txt" \
+            --output "$manifest"
+          cat "$manifest"
+          gh attestation verify "$manifest" --repo "$RELEASE_REPOSITORY" \
+            --signer-workflow "${RELEASE_REPOSITORY}/.github/workflows/release.yml" \
+            --source-ref refs/heads/next
+          field() { sed -n "s/^$1=//p" "$manifest"; }
+          expected="$(gh api "repos/osodevops/ms-teams-cli/commits/${VERSION_TAG}" --jq .sha)"
+          if [[ "$(field source_repository)" != osodevops/ms-teams-cli \
+            || "$(field source_tag)" != "$VERSION_TAG" \
+            || "$(field source_commit)" != "$expected" ]]; then
+            echo "${TAG} was not built from osodevops/ms-teams-cli ${VERSION_TAG} (${expected})" >&2
+            exit 1
+          fi
 
       - name: Download release checksums
         if: steps.release.outputs.tag != ''
@@ -163,6 +194,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.prepare.outputs.tag }}
           VERSION_TAG: ${{ needs.prepare.outputs.version_tag }}
+          ATTESTATION: ${{ needs.prepare.outputs.attestation }}
         shell: bash
         run: |
           set -euo pipefail
@@ -179,12 +211,21 @@ jobs:
           fi
           brew install --formula "aberoham/candidate/${FORMULA}"
 
-          # Releases from 0.8.0 on carry build provenance attestations: every
-          # mirrored stable release, and every fork prerelease from
-          # 0.8.1-alpha.1. Older tags stay installable for rollbacks.
-          if ruby -e 'exit Gem::Version.new(ARGV[0]) >= Gem::Version.new("0.8.0")' "${VERSION_TAG#v}"; then
+          # Every mirrored release, and every fork prerelease from
+          # 0.8.1-alpha.1, carries a build provenance attestation from the
+          # fork's release workflow (scripts/teams_channel.rb). Older fork
+          # prereleases stay installable for rollbacks. A mirror runs from
+          # next; a prerelease from its own tag.
+          if [[ "$ATTESTATION" == required ]]; then
+            if [[ "$CHANNEL" == stable ]]; then
+              source_ref=refs/heads/next
+            else
+              source_ref="refs/tags/${TAG}"
+            fi
             archive="$(brew --cache --formula "aberoham/candidate/${FORMULA}")"
-            gh attestation verify "$archive" --repo "$RELEASE_REPOSITORY"
+            gh attestation verify "$archive" --repo "$RELEASE_REPOSITORY" \
+              --signer-workflow "${RELEASE_REPOSITORY}/.github/workflows/release.yml" \
+              --source-ref "$source_ref"
           else
             echo "${TAG} predates attestations; not checking provenance."
           fi

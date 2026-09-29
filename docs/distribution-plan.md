@@ -158,10 +158,17 @@ channel names its channel. `update-teams-formula.yml` publishes
 `upstream-vX.Y.Z` releases to `teams-cli`, and
 `update-teams-next-formula.yml` publishes `-alpha.N`, `-beta.N` and `-rc.N`
 tags, for which RubyGems and Homebrew agree on ordering, to `teams-cli-next`.
-Each picks the newest release of its own channel, since the fork publishes both.
-It refuses to lower the version unless a tag is named explicitly, verifies the
-build provenance attestation of releases from 0.8.0 on, and installs and tests
-the candidate on macOS Arm and Intel and Linux x86-64 and Arm. It commits to
+`scripts/teams_channel.rb` holds each channel's tag rule, formula and
+attestation cutover. By default each updater takes the highest version of its
+own channel among all of the fork's published releases, since the fork
+publishes both. Each channel writes only its own formula. The updater refuses
+to lower the version unless a tag is named explicitly.
+It verifies the build provenance attestation of every mirrored release and of
+fork prereleases from 0.8.1-alpha.1, requiring the fork's `release.yml` as the
+signer and `next` (mirror) or the release tag (prerelease) as the source ref.
+For a mirrored release it also checks the attested source manifest names
+upstream's commit for that tag. It installs and tests the candidate on macOS
+Arm and Intel and Linux x86-64 and Arm. It commits to
 `main` only from `main`'s own workflow, and only if `main`'s formula has not
 changed since the candidate was prepared; otherwise the run fails and asks to
 be re-run. Runs of one channel are serialized, and so are all publishes.

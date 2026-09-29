@@ -7,13 +7,13 @@ This tap is independent of the upstream projects' official release channels.
 
 | Tool | Intended package | Status |
 | --- | --- | --- |
-| Microsoft Teams | `aberoham/tap/teams-cli` | Available; upstream [osodevops/ms-teams-cli](https://github.com/osodevops/ms-teams-cli) stable releases, built from upstream's commit and signed, notarized and attested by [aberoham/ms-teams-cli](https://github.com/aberoham/ms-teams-cli) |
+| Microsoft Teams | `aberoham/tap/teams-cli` | Switching to upstream [osodevops/ms-teams-cli](https://github.com/osodevops/ms-teams-cli) stable releases, rebuilt from upstream's source and signed, notarized and attested by [aberoham/ms-teams-cli](https://github.com/aberoham/ms-teams-cli); carries 0.7.1-alpha.3 until the first mirrored release is published |
 | Microsoft Teams, prereleases | `aberoham/tap/teams-cli-next` | Available; follows prereleases of [aberoham/ms-teams-cli](https://github.com/aberoham/ms-teams-cli) `next`. Conflicts with `teams-cli`: both install `teams` |
 | Microsoft Outlook (`olk`) | `aberoham/tap/olk` (macOS cask) | Available; follows prereleases of [aberoham/olkcli](https://github.com/aberoham/olkcli) `next` |
 | Microsoft Entra (`entra`) | `aberoham/tap/entra` | Available; follows stable releases of [aberoham/ms-entra-cli](https://github.com/aberoham/ms-entra-cli) |
 
 `teams-cli-next` and Outlook distribute my tested integration builds;
-`teams-cli` distributes upstream's releases unchanged apart from the signature.
+`teams-cli` distributes upstream's releases, rebuilt from upstream's own source.
 Entra follows my own stable releases. Switch between the two Teams channels
 with `brew uninstall teams-cli && brew install aberoham/tap/teams-cli-next`,
 or the reverse. See the [distribution plan](docs/distribution-plan.md) for

@@ -1,15 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Points a teams formula at one fork release. Two channels come from the same
-# fork repository:
-#
-#   stable  Formula/teams-cli.rb follows upstream-vX.Y.Z releases, which the
-#           fork builds, signs and attests from upstream's own vX.Y.Z commit.
-#   next    Formula/teams-cli-next.rb follows the fork's own prereleases.
-#
-# Set ALLOW_DOWNGRADE=true to move the formula to a lower version, as a
-# deliberate rollback does.
+# Points a teams formula at one fork release of its channel; see
+# teams_channel.rb for the two channels. Set ALLOW_DOWNGRADE=true to move the
+# formula to a lower version, as a deliberate rollback does.
+
+require_relative "teams_channel"
 
 channel, tag, repository, checksums_path, formula_path = ARGV
 
@@ -18,25 +14,18 @@ unless ARGV.length == 5
 end
 
 # The archives are named after the version the binary reports: upstream's tag
-# for a mirrored release, the release tag itself for a fork prerelease.
-version_tag =
-  case channel
-  when "stable"
-    stable = tag.match(/\Aupstream-(v\d+\.\d+\.\d+)\z/)
-    abort "invalid release tag: #{tag.inspect} (expected upstream-vX.Y.Z)" unless stable
-    stable[1]
-  when "next"
-    # The fork's own work ships as prereleases only, so it can never shadow
-    # an upstream stable release of the same number. Limiting the labels to
-    # alpha, beta and rc keeps RubyGems' ordering, used below, identical to
-    # Homebrew's; the two disagree on labels such as "pre" and "preview".
-    unless tag.match?(/\Av\d+\.\d+\.\d+-(?:alpha|beta|rc)\.\d+\z/)
-      abort "invalid release tag: #{tag.inspect} (expected vX.Y.Z-alpha.N, -beta.N or -rc.N)"
-    end
-    tag
-  else
-    abort "unknown channel: #{channel.inspect} (expected stable or next)"
-  end
+# for a mirrored release, the release tag itself for a fork prerelease. A
+# channel writes only its own formula, so one channel's release can never land
+# in the other's.
+begin
+  version_tag = TeamsChannel.version_tag(channel, tag)
+  expected_formula = TeamsChannel.formula(channel)
+rescue ArgumentError => e
+  abort e.message
+end
+unless File.basename(formula_path, ".rb") == expected_formula
+  abort "the #{channel} channel writes #{expected_formula}.rb, not #{File.basename(formula_path)}"
+end
 
 allowed_repos = %w[aberoham/ms-teams-cli]
 unless allowed_repos.include?(repository)

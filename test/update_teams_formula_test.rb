@@ -19,42 +19,57 @@ class UpdateTeamsFormulaTest < Minitest::Test
     x86_64-unknown-linux-musl
   ].freeze
 
+  # Each channel writes the formula named after it; @formula is next's, which
+  # most tests exercise.
   def setup
     @dir = Dir.mktmpdir
-    @formula = File.join(@dir, "teams-cli.rb")
-    File.write(@formula, File.read(FORMULA))
+    @stable = File.join(@dir, "teams-cli.rb")
+    @formula = File.join(@dir, "teams-cli-next.rb")
+    [@stable, @formula].each { |path| File.write(path, File.read(FORMULA)) }
   end
 
   def teardown
     FileUtils.remove_entry(@dir)
   end
 
+  # Every target gets a different digest, so a digest written against the
+  # wrong target, or not written at all, is caught.
+  def digest_for(target)
+    TARGETS.index(target).to_s * 64
+  end
+
   def checksums_for(tag, skip: nil)
     path = File.join(@dir, "checksums-#{tag}.txt")
-    lines = TARGETS.reject { |t| t == skip }.each_with_index.map do |target, i|
-      "#{i.to_s * 64} teams-#{tag}-#{target}.tar.gz"
+    lines = TARGETS.reject { |t| t == skip }.map do |target|
+      "#{digest_for(target)} teams-#{tag}-#{target}.tar.gz"
     end
     File.write(path, "#{lines.join("\n")}\n")
     path
   end
 
-  def run_script(tag, channel: "next", repo: REPO, checksums: checksums_for(tag), env: {})
-    Open3.capture3(env, "ruby", SCRIPT, channel, tag, repo, checksums, @formula)
+  def run_script(tag, channel: "next", repo: REPO, checksums: checksums_for(tag), env: {},
+                 formula: channel == "stable" ? @stable : @formula)
+    Open3.capture3(env, "ruby", SCRIPT, channel, tag, repo, checksums, formula)
+  end
+
+  def assert_points_at(formula_path, release_tag, version_tag)
+    formula = File.read(formula_path)
+    TARGETS.each do |target|
+      url = "https://github.com/#{REPO}/releases/download/#{release_tag}/" \
+            "teams-#{version_tag}-#{target}.tar.gz"
+      assert_match(/^\s*url "#{Regexp.escape(url)}"\n\s*sha256 "#{digest_for(target)}"$/, formula,
+                   "#{target} does not pair its URL with its own checksum")
+    end
+    refute_includes formula, "osodevops"
+    assert_equal 1, formula.scan(/^\s*version /).length
   end
 
   def test_points_every_target_at_the_fork_prerelease
     _, err, status = run_script("v0.7.1-alpha.1")
     assert status.success?, err
 
-    formula = File.read(@formula)
-    assert_match(/^  version "0\.7\.1-alpha\.1"$/, formula)
-    TARGETS.each do |target|
-      assert_includes formula,
-                      "https://github.com/#{REPO}/releases/download/v0.7.1-alpha.1/" \
-                      "teams-v0.7.1-alpha.1-#{target}.tar.gz"
-    end
-    refute_includes formula, "osodevops"
-    assert_equal 1, formula.scan(/^\s*version /).length
+    assert_match(/^  version "0\.7\.1-alpha\.1"$/, File.read(@formula))
+    assert_points_at(@formula, "v0.7.1-alpha.1", "v0.7.1-alpha.1")
   end
 
   def test_refuses_a_stable_tag
@@ -116,7 +131,7 @@ class UpdateTeamsFormulaTest < Minitest::Test
 
     _, err, status = run_script("v0.7.1-alpha.1")
     refute status.success?
-    assert_match(/refusing to move teams-cli from 0\.7\.1-alpha\.2 down/, err)
+    assert_match(/refusing to move teams-cli-next from 0\.7\.1-alpha\.2 down/, err)
 
     _, err, status = run_script("v0.7.1-alpha.1", env: { "ALLOW_DOWNGRADE" => "true" })
     assert status.success?, err
@@ -130,6 +145,7 @@ class UpdateTeamsFormulaTest < Minitest::Test
     assert_equal before, File.read(@formula)
   end
 
+
   # A mirrored upstream release lives under upstream-vX.Y.Z, but its archives
   # and the binary's own version carry upstream's vX.Y.Z.
   def test_stable_points_every_target_at_the_mirrored_release
@@ -137,14 +153,8 @@ class UpdateTeamsFormulaTest < Minitest::Test
                                                    checksums: checksums_for("v0.8.0"))
     assert status.success?, err
 
-    formula = File.read(@formula)
-    assert_match(/^  version "0\.8\.0"$/, formula)
-    TARGETS.each do |target|
-      assert_includes formula,
-                      "https://github.com/#{REPO}/releases/download/upstream-v0.8.0/" \
-                      "teams-v0.8.0-#{target}.tar.gz"
-    end
-    refute_includes formula, "osodevops"
+    assert_match(/^  version "0\.8\.0"$/, File.read(@stable))
+    assert_points_at(@stable, "upstream-v0.8.0", "v0.8.0")
   end
 
   def test_stable_refuses_anything_but_an_upstream_stable_tag
@@ -167,13 +177,38 @@ class UpdateTeamsFormulaTest < Minitest::Test
     assert_match(/unknown channel/, err)
   end
 
-  # Moving the stable formula from a fork prerelease to the mirrored release
-  # of the same line is an upgrade: 0.8.0 sorts above 0.7.1-alpha.3.
-  def test_stable_moves_up_from_a_fork_prerelease
-    assert run_script("v0.7.1-alpha.3")[2].success?
+  # A channel writes only its own formula, whatever path it is handed.
+  def test_each_channel_refuses_the_other_s_formula
+    _, err, status = run_script("upstream-v0.8.0", channel: "stable", formula: @formula,
+                                                   checksums: checksums_for("v0.8.0"))
+    refute status.success?
+    assert_match(/the stable channel writes teams-cli\.rb, not teams-cli-next\.rb/, err)
+
+    _, err, status = run_script("v0.8.1-alpha.1", formula: @stable)
+    refute status.success?
+    assert_match(/the next channel writes teams-cli-next\.rb, not teams-cli\.rb/, err)
+  end
+
+  # teams-cli carries 0.7.1-alpha.3 until the first mirrored release; moving
+  # it to 0.8.0 is an upgrade, since 0.8.0 sorts above 0.7.1-alpha.3.
+  def test_stable_moves_up_from_the_fork_prerelease_it_carried
+    File.write(@stable, File.read(@stable).sub(/^(  license "MIT"\n)/) { %(  version "0.7.1-alpha.3"\n#{$1}) })
     _, err, status = run_script("upstream-v0.8.0", channel: "stable",
                                                    checksums: checksums_for("v0.8.0"))
     assert status.success?, err
-    assert_match(/^  version "0\.8\.0"$/, File.read(@formula))
+    assert_match(/^  version "0\.8\.0"$/, File.read(@stable))
+  end
+
+  def test_stable_refuses_an_unattended_downgrade_but_allows_a_named_rollback
+    assert run_script("upstream-v0.9.0", channel: "stable", checksums: checksums_for("v0.9.0"))[2].success?
+
+    _, err, status = run_script("upstream-v0.8.0", channel: "stable", checksums: checksums_for("v0.8.0"))
+    refute status.success?
+    assert_match(/refusing to move teams-cli from 0\.9\.0 down to 0\.8\.0/, err)
+
+    _, err, status = run_script("upstream-v0.8.0", channel: "stable", checksums: checksums_for("v0.8.0"),
+                                                   env: { "ALLOW_DOWNGRADE" => "true" })
+    assert status.success?, err
+    assert_points_at(@stable, "upstream-v0.8.0", "v0.8.0")
   end
 end
