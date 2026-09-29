@@ -1,5 +1,5 @@
-class TeamsCli < Formula
-  desc "Microsoft Teams CLI for AI agents and automation"
+class TeamsCliNext < Formula
+  desc "Microsoft Teams CLI for AI agents and automation (fork prereleases)"
   homepage "http://msteamscli.com/"
   version "0.7.1-alpha.3"
   license "MIT"
@@ -26,7 +26,7 @@ class TeamsCli < Formula
     end
   end
 
-  conflicts_with "teams-cli-next", because: "both install a `teams` executable"
+  conflicts_with "teams-cli", because: "both install a `teams` executable"
 
   def install
     bin.install "bin/teams"

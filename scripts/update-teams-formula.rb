@@ -1,21 +1,30 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Points Formula/teams-cli.rb at one fork prerelease. Set ALLOW_DOWNGRADE=true
-# to move the formula to a lower version, as a deliberate rollback does.
+# Points a teams formula at one fork release of its channel; see
+# teams_channel.rb for the two channels. Set ALLOW_DOWNGRADE=true to move the
+# formula to a lower version, as a deliberate rollback does.
 
-tag, repository, checksums_path, formula_path = ARGV
+require_relative "teams_channel"
 
-unless ARGV.length == 4
-  abort "usage: update-teams-formula.rb TAG REPOSITORY CHECKSUMS FORMULA"
+channel, tag, repository, checksums_path, formula_path = ARGV
+
+unless ARGV.length == 5
+  abort "usage: update-teams-formula.rb stable|next TAG REPOSITORY CHECKSUMS FORMULA"
 end
 
-# The fork channel carries prereleases only, so it can never shadow an
-# upstream stable release of the same number. Limiting the labels to alpha,
-# beta and rc keeps RubyGems' ordering, used below, identical to Homebrew's;
-# the two disagree on labels such as "pre" and "preview".
-unless tag.match?(/\Av\d+\.\d+\.\d+-(?:alpha|beta|rc)\.\d+\z/)
-  abort "invalid release tag: #{tag.inspect} (expected vX.Y.Z-alpha.N, -beta.N or -rc.N)"
+# The archives are named after the version the binary reports: upstream's tag
+# for a mirrored release, the release tag itself for a fork prerelease. A
+# channel writes only its own formula, so one channel's release can never land
+# in the other's.
+begin
+  version_tag = TeamsChannel.version_tag(channel, tag)
+  expected_formula = TeamsChannel.formula(channel)
+rescue ArgumentError => e
+  abort e.message
+end
+unless File.basename(formula_path, ".rb") == expected_formula
+  abort "the #{channel} channel writes #{expected_formula}.rb, not #{File.basename(formula_path)}"
 end
 
 allowed_repos = %w[aberoham/ms-teams-cli]
@@ -39,7 +48,8 @@ targets = %w[
 
 formula = File.read(formula_path)
 original_formula = formula.dup
-release_version = tag.delete_prefix("v")
+release_version = version_tag.delete_prefix("v")
+formula_name = File.basename(formula_path, ".rb")
 
 # The published version is the explicit version line, or failing that the one
 # embedded in the first download URL, which is how the inherited formula is
@@ -48,7 +58,7 @@ current_version = formula[/^[ \t]*version "([^"]+)"$/, 1] ||
                   formula[%r{/releases/download/v([^/"]+)/}, 1]
 if current_version && ENV["ALLOW_DOWNGRADE"] != "true" &&
    Gem::Version.new(release_version) < Gem::Version.new(current_version)
-  abort "refusing to move teams-cli from #{current_version} down to #{release_version} " \
+  abort "refusing to move #{formula_name} from #{current_version} down to #{release_version} " \
         "without ALLOW_DOWNGRADE=true"
 end
 
@@ -62,7 +72,7 @@ if formula.sub!(/^[ \t]*version "[^"]*"\n/, "  version \"#{release_version}\"\n"
 end
 
 targets.each do |target|
-  asset = "teams-#{tag}-#{target}.tar.gz"
+  asset = "teams-#{version_tag}-#{target}.tar.gz"
   digest = checksums.fetch(asset) { abort "missing checksum for #{asset}" }
   abort "invalid SHA-256 for #{asset}: #{digest.inspect}" unless digest.match?(/\A[0-9a-f]{64}\z/)
 

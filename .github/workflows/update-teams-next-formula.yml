@@ -1,0 +1,31 @@
+name: Update Teams CLI Next Formula
+run-name: Update teams-cli-next ${{ inputs.tag || 'to the newest fork prerelease' }}
+
+# teams-cli-next: the fork's own vX.Y.Z-alpha.N, -beta.N and -rc.N releases.
+on:
+  schedule:
+    # 09:27 UTC, Monday to Friday.
+    - cron: "27 9 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Fork prerelease tag to publish (default is the newest)
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: update-teams-cli-next-formula
+  cancel-in-progress: false
+
+jobs:
+  formula:
+    name: teams-cli-next
+    permissions:
+      contents: write # publish the formula to main
+      attestations: read # verify the archive's build provenance
+    uses: ./.github/workflows/teams-formula.yml
+    with:
+      channel: next
+      tag: ${{ inputs.tag }}

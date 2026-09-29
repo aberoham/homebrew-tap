@@ -13,7 +13,8 @@ checksums. It does not contain the source repositories or build a combined relea
 
 | Tool | Release source | Tap entry | Installed command | Release policy |
 | --- | --- | --- | --- | --- |
-| Teams | `aberoham/ms-teams-cli` | `Formula/teams-cli.rb` | `teams` | My tested `next` integration builds |
+| Teams | `aberoham/ms-teams-cli` (`upstream-vX.Y.Z`) | `Formula/teams-cli.rb` | `teams` | Upstream's stable releases, rebuilt from upstream's commit and signed |
+| Teams, next | `aberoham/ms-teams-cli` (`vX.Y.Z-alpha.N`) | `Formula/teams-cli-next.rb` | `teams` | My tested `next` integration builds |
 | Outlook | `aberoham/olkcli` | `Casks/olk.rb` | `olk` | My tested `next` integration builds |
 | Entra | `aberoham/ms-entra-cli` | `Formula/entra.rb` | `entra` | My stable releases; optional prereleases |
 
@@ -26,7 +27,7 @@ Homebrew phase.
 Fresh installs:
 
 ```sh
-brew install aberoham/tap/teams-cli
+brew install aberoham/tap/teams-cli        # or aberoham/tap/teams-cli-next
 brew install --cask aberoham/tap/olk
 brew install aberoham/tap/entra
 ```
@@ -128,8 +129,9 @@ future `entra-next` entry if both channels need to be installable.
 
 ## Publishing responsibilities
 
-1. Each source repository validates the exact tagged commit, builds the supported
+1. Each source repository validates the commit it builds, builds the supported
    targets, and publishes archives plus checksums to its own GitHub Release.
+   That is the tagged commit, except for a Teams mirror, described below.
 2. The tap's own updater then reads the published release; no source repository
    writes to the tap.
 3. Tap validation checks source allowlists, explicit version, asset names, archive
@@ -142,18 +144,45 @@ future `entra-next` entry if both channels need to be installable.
 4. Publish the recipe only after checks pass. Confirm the committed recipe matches
    all expected release assets. A GitHub prerelease badge alone proves none of this.
 
-For Teams, the fork's release workflow runs the full CI matrix, requires the tag
-to equal the `Cargo.toml` version, and accepts only the same three prerelease
-forms as the tap.
+For Teams, a tag push on the fork runs its release workflow over the tagged
+commit: the full CI matrix, the tag equal to the `Cargo.toml` version, and only
+the same three prerelease forms as the tap.
 Its Homebrew, Scoop and documentation jobs run only upstream, and `next` has no
-auto-tag workflow. The tap's
-`update-teams-formula.yml` takes releases from the fork alone and accepts only
-`-alpha.N`, `-beta.N` and `-rc.N` tags, for which RubyGems and Homebrew agree
-on ordering. It refuses to lower the version unless a tag is named explicitly,
-and installs and tests the candidate on macOS Arm and Intel and Linux x86-64 and
+auto-tag workflow. The fork's `mirror-upstream.yml` also calls that release
+workflow, from `next` on weekdays at 08:47 UTC, for each new stable upstream
+release. That run builds upstream's tagged commit, checked out from upstream's
+own repository, with the fork's CI, signing, notarization and provenance
+attestation. It publishes the result as `upstream-vX.Y.Z` with archives named
+`teams-vX.Y.Z-<target>`. The `upstream-vX.Y.Z` tag marks the fork's `next`
+commit that ran the workflow, not the source; `teams-vX.Y.Z-source.txt`,
+attested in the same statement as the archives, names the upstream commit, and
+the tap checks both before publishing.
+
+The tap's `teams-formula.yml` serves both Teams formulas; one caller per
+channel names its channel. `update-teams-formula.yml` publishes
+`upstream-vX.Y.Z` releases to `teams-cli`, and
+`update-teams-next-formula.yml` publishes `-alpha.N`, `-beta.N` and `-rc.N`
+tags, for which RubyGems and Homebrew agree on ordering, to `teams-cli-next`.
+`scripts/teams_channel.rb` holds each channel's tag rule, formula and
+attestation cutover. By default each updater takes the highest version of its
+own channel among all of the fork's published releases, since the fork
+publishes both. Each channel writes only its own formula. The updater refuses
+to lower the version unless a tag is named explicitly.
+It verifies the build provenance attestation of every mirrored release and of
+fork prereleases from 0.8.1-alpha.1, requiring the fork's `release.yml` as the
+signer and `next` (mirror) or the release tag (prerelease) as the source ref.
+For a mirrored release it also checks the attested source manifest names
+upstream's commit for that tag, and that the one signed statement covering the
+manifest also covers each archive at the checksum the formula pins. It
+installs and tests the candidate on macOS Arm and Intel and Linux x86-64 and
 Arm. It commits to `main` only from `main`'s own workflow, and only if `main`'s
-formula has not changed since the candidate was prepared; otherwise the run
-fails and asks to be re-run. Runs are serialized.
+formula has not
+changed since the candidate was prepared; otherwise the run fails and asks to
+be re-run. Runs of one channel are serialized, and so are all publishes.
+
+The two Teams formulas declare `conflicts_with` each other rather than
+coexisting: both install `teams`, so scripts, skills and man pages keep one
+name, and switching channels is an uninstall and an install.
 
 For Outlook, the fork's release runs CI first and accepts the same three
 prerelease forms. GoReleaser builds the Linux and Windows archives in one job
@@ -191,15 +220,19 @@ explicitly design workflow dispatch/reuse. See
 The Apple signing certificate and notarization key are the one exception to
 short-lived credentials. They are stored only in each source repository's
 `release` environment, which requires my approval for every run and admits only
-release tags. They never reach the tap. See
+release tags, plus the Teams fork's `next` branch for its upstream mirror. They
+never reach the tap. See
 [Shipping a new project as a signed macOS binary](signing-a-new-project.md).
 
-The tap updater needs only public release URLs plus a push to its own repository,
-which its own `GITHUB_TOKEN` already permits, so no source repository triggers it
-or holds a credential for it. It runs once each weekday at 09:17 UTC and picks
-up the newest fork release. It can also be run at once, optionally naming a tag:
+The tap updaters need only public release URLs plus a push to their own
+repository, which its own `GITHUB_TOKEN` already permits, so no source
+repository triggers them or holds a credential for them. The Teams updaters run
+each weekday, `teams-cli` at 09:17 UTC and `teams-cli-next` at 09:27 UTC, and
+pick up the newest release of their channel. Either can also be run at once,
+optionally naming a tag:
 
-    gh workflow run update-teams-formula.yml --repo aberoham/homebrew-tap -f tag=v0.7.1-alpha.1
+    gh workflow run update-teams-formula.yml --repo aberoham/homebrew-tap -f tag=upstream-v0.8.0
+    gh workflow run update-teams-next-formula.yml --repo aberoham/homebrew-tap -f tag=v0.8.1-alpha.1
 
 The Entra and Outlook updaters run the same way, at 09:47 UTC, from
 `update-entra-formula.yml` and `update-olk-cask.yml`.
