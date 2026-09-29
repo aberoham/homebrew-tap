@@ -1,13 +1,13 @@
 cask "olk" do
-  version "1.14.1-alpha.2"
+  version "1.15.2-alpha.1"
 
   on_macos do
     on_arm do
-      sha256 "c6a7a082585b0b6d974b49a618917f9fba7112b1e0ecfb30f614745e7b45afbd"
+      sha256 "d1767634cb079afc7a9810e6d7110f1dc37eeb36728fdbd54ff82083e092ac0f"
       url "https://github.com/aberoham/olkcli/releases/download/v#{version}/olk_#{version}_darwin_arm64.tar.gz"
     end
     on_intel do
-      sha256 "fe7e084f35db6c7fb7b75fec94d4f28306a7c94c4a551723bf1e34088d44b2f3"
+      sha256 "3e1c0c5e6236cc2b95fafe5cf93cec33ad6a82b1dd771012e6b09ed2412e5a4e"
       url "https://github.com/aberoham/olkcli/releases/download/v#{version}/olk_#{version}_darwin_amd64.tar.gz"
     end
   end
