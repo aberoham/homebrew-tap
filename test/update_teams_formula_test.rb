@@ -38,8 +38,8 @@ class UpdateTeamsFormulaTest < Minitest::Test
     path
   end
 
-  def run_script(tag, repo: REPO, checksums: checksums_for(tag), env: {})
-    Open3.capture3(env, "ruby", SCRIPT, tag, repo, checksums, @formula)
+  def run_script(tag, channel: "next", repo: REPO, checksums: checksums_for(tag), env: {})
+    Open3.capture3(env, "ruby", SCRIPT, channel, tag, repo, checksums, @formula)
   end
 
   def test_points_every_target_at_the_fork_prerelease
@@ -128,5 +128,52 @@ class UpdateTeamsFormulaTest < Minitest::Test
     before = File.read(@formula)
     assert run_script("v0.7.1-alpha.1")[2].success?
     assert_equal before, File.read(@formula)
+  end
+
+  # A mirrored upstream release lives under upstream-vX.Y.Z, but its archives
+  # and the binary's own version carry upstream's vX.Y.Z.
+  def test_stable_points_every_target_at_the_mirrored_release
+    _, err, status = run_script("upstream-v0.8.0", channel: "stable",
+                                                   checksums: checksums_for("v0.8.0"))
+    assert status.success?, err
+
+    formula = File.read(@formula)
+    assert_match(/^  version "0\.8\.0"$/, formula)
+    TARGETS.each do |target|
+      assert_includes formula,
+                      "https://github.com/#{REPO}/releases/download/upstream-v0.8.0/" \
+                      "teams-v0.8.0-#{target}.tar.gz"
+    end
+    refute_includes formula, "osodevops"
+  end
+
+  def test_stable_refuses_anything_but_an_upstream_stable_tag
+    %w[v0.8.0 v0.8.1-alpha.1 upstream-v0.8.1-alpha.1 upstream-0.8.0 upstream-v0.8].each do |tag|
+      _, err, status = run_script(tag, channel: "stable")
+      refute status.success?, "#{tag} was accepted"
+      assert_match(/expected upstream-vX\.Y\.Z/, err)
+    end
+  end
+
+  def test_next_refuses_a_mirrored_stable_release
+    _, err, status = run_script("upstream-v0.8.0", checksums: checksums_for("v0.8.0"))
+    refute status.success?
+    assert_match(/expected vX\.Y\.Z-alpha\.N/, err)
+  end
+
+  def test_refuses_an_unknown_channel
+    _, err, status = run_script("v0.8.1-alpha.1", channel: "beta")
+    refute status.success?
+    assert_match(/unknown channel/, err)
+  end
+
+  # Moving the stable formula from a fork prerelease to the mirrored release
+  # of the same line is an upgrade: 0.8.0 sorts above 0.7.1-alpha.3.
+  def test_stable_moves_up_from_a_fork_prerelease
+    assert run_script("v0.7.1-alpha.3")[2].success?
+    _, err, status = run_script("upstream-v0.8.0", channel: "stable",
+                                                   checksums: checksums_for("v0.8.0"))
+    assert status.success?, err
+    assert_match(/^  version "0\.8\.0"$/, File.read(@formula))
   end
 end
