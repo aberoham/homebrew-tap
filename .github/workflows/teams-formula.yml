@@ -90,9 +90,24 @@ jobs:
             echo "allow_downgrade=${allow_downgrade}"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Download release checksums
+        if: steps.release.outputs.tag != ''
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-all-errors \
+            "https://github.com/${RELEASE_REPOSITORY}/releases/download/${TAG}/checksums-sha256.txt" \
+            --output "${RUNNER_TEMP}/checksums-sha256.txt"
+
       # A mirrored release's attestation names the fork's workflow, not the
-      # source it built. Its source manifest, attested with the archives,
-      # names that source; it must be upstream's commit for the same tag.
+      # source it built. Its source manifest names that source, and must name
+      # upstream's commit for the same tag. The fork attests every file of a
+      # release in one signed statement, so the statement that covers the
+      # manifest must also cover each archive at exactly the checksum the
+      # formula will pin; a manifest from another run cannot vouch for them.
       - name: Check the mirrored source
         if: steps.release.outputs.tag != '' && env.CHANNEL == 'stable'
         env:
@@ -107,9 +122,10 @@ jobs:
             "https://github.com/${RELEASE_REPOSITORY}/releases/download/${TAG}/teams-${VERSION_TAG}-source.txt" \
             --output "$manifest"
           cat "$manifest"
-          gh attestation verify "$manifest" --repo "$RELEASE_REPOSITORY" \
+          verified="$(gh attestation verify "$manifest" --repo "$RELEASE_REPOSITORY" \
             --signer-workflow "${RELEASE_REPOSITORY}/.github/workflows/release.yml" \
-            --source-ref refs/heads/next
+            --source-ref refs/heads/next --format json)"
+
           field() { sed -n "s/^$1=//p" "$manifest"; }
           expected="$(gh api "repos/osodevops/ms-teams-cli/commits/${VERSION_TAG}" --jq .sha)"
           if [[ "$(field source_repository)" != osodevops/ms-teams-cli \
@@ -119,17 +135,23 @@ jobs:
             exit 1
           fi
 
-      - name: Download release checksums
-        if: steps.release.outputs.tag != ''
-        env:
-          TAG: ${{ steps.release.outputs.tag }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --location --silent --show-error \
-            --retry 5 --retry-all-errors \
-            "https://github.com/${RELEASE_REPOSITORY}/releases/download/${TAG}/checksums-sha256.txt" \
-            --output "${RUNNER_TEMP}/checksums-sha256.txt"
+          # "<sha256> <name>" for the four archives the formula installs.
+          wanted="$(grep -E " teams-${VERSION_TAG//./\\.}-[a-z0-9_-]+\.tar\.gz$" \
+            "${RUNNER_TEMP}/checksums-sha256.txt" | awk '{print $1 " " $2}' | sort)"
+          if [[ "$(wc -l <<<"$wanted")" -ne 4 ]]; then
+            echo "checksums-sha256.txt does not list the four archives for ${VERSION_TAG}" >&2
+            exit 1
+          fi
+          bound="$(jq -r --arg wanted "$wanted" '
+            [.[].verificationResult.statement.subject
+             | [.[] | "\(.digest.sha256) \(.name)"]
+             | select(($wanted | split("\n")) - . == [])]
+            | length' <<<"$verified")"
+          if [[ "$bound" -lt 1 ]]; then
+            echo "No attestation of ${TAG}'s source manifest also covers its archives at these checksums" >&2
+            exit 1
+          fi
+          echo "The source manifest and the four archives are attested together."
 
       - name: Update formula URLs and checksums
         id: formula
