@@ -12,7 +12,8 @@ class UpdateOlkCaskTest < Minitest::Test
 
   def setup
     @dir = Dir.mktmpdir
-    @cask = File.join(@dir, "olk.rb")
+    @cask = File.join(@dir, "olk-next.rb")
+    @stable = File.join(@dir, "olk.rb")
   end
 
   def teardown
@@ -30,8 +31,12 @@ class UpdateOlkCaskTest < Minitest::Test
     path
   end
 
-  def run_script(tag, repo: REPO, checksums: checksums_for(tag), env: {})
-    Open3.capture3(env, "ruby", SCRIPT, tag, repo, checksums, @cask)
+  def run_script(tag, repo: REPO, checksums: checksums_for(tag), env: {}, channel: "next", cask: @cask)
+    Open3.capture3(env, "ruby", SCRIPT, channel, tag, repo, checksums, cask)
+  end
+
+  def run_stable(tag, checksums: checksums_for(tag.delete_prefix("upstream-")))
+    run_script(tag, channel: "stable", cask: @stable, checksums: checksums)
   end
 
   def test_writes_a_cask_for_both_mac_architectures
@@ -39,7 +44,9 @@ class UpdateOlkCaskTest < Minitest::Test
     assert status.success?, err
 
     cask = File.read(@cask)
+    assert_match(/^cask "olk-next" do$/, cask)
     assert_match(/^  version "1\.14\.1-alpha\.1"$/, cask)
+    assert_includes cask, %(conflicts_with cask: "olk")
     assert_includes cask, %(sha256 "#{'1' * 64}")
     assert_includes cask, %(sha256 "#{'2' * 64}")
     assert_includes cask,
@@ -54,7 +61,7 @@ class UpdateOlkCaskTest < Minitest::Test
   end
 
   def test_refuses_a_stable_tag_and_other_labels
-    %w[v1.14.1 v1.14.1-preview.1 v1.14.1-alpha].each do |tag|
+    %w[v1.14.1 v1.14.1-preview.1 v1.14.1-alpha upstream-v1.16.1].each do |tag|
       _, err, status = run_script(tag)
       refute status.success?, "#{tag} was accepted"
       assert_match(/invalid release tag/, err)
@@ -105,7 +112,7 @@ class UpdateOlkCaskTest < Minitest::Test
 
     _, err, status = run_script("v1.14.1-alpha.1")
     refute status.success?
-    assert_match(/refusing to move olk from 1\.14\.1-alpha\.2 down/, err)
+    assert_match(/refusing to move olk-next from 1\.14\.1-alpha\.2 down/, err)
 
     _, err, status = run_script("v1.14.1-alpha.1", env: { "ALLOW_DOWNGRADE" => "true" })
     assert status.success?, err
@@ -117,5 +124,50 @@ class UpdateOlkCaskTest < Minitest::Test
     before = File.read(@cask)
     assert run_script("v1.14.1-alpha.1")[2].success?
     assert_equal before, File.read(@cask)
+  end
+
+  def test_stable_writes_olk_from_a_mirrored_release
+    _, err, status = run_stable("upstream-v1.16.1")
+    assert status.success?, err
+
+    cask = File.read(@stable)
+    assert_match(/^cask "olk" do$/, cask)
+    assert_match(/^  version "1\.16\.1"$/, cask)
+    assert_includes cask,
+                    "https://github.com/#{REPO}/releases/download/upstream-v\#{version}/olk_\#{version}_darwin_arm64.tar.gz"
+    assert_includes cask, %(homepage "https://github.com/rlrghb/olkcli")
+    assert_includes cask, %(conflicts_with cask: "olk-next")
+    refute_includes cask, "com.apple.quarantine"
+    refute_includes cask, "fork prereleases"
+
+    _, err, status = Open3.capture3("ruby", "-c", @stable)
+    assert status.success?, err
+  end
+
+  def test_stable_refuses_fork_prereleases_and_plain_tags
+    %w[v1.16.2-alpha.1 v1.16.1 upstream-v1.16.1-alpha.1].each do |tag|
+      _, err, status = run_stable(tag, checksums: checksums_for("v1.16.1"))
+      refute status.success?, "#{tag} was accepted"
+      assert_match(/invalid release tag/, err)
+    end
+  end
+
+  def test_a_channel_writes_only_its_own_cask
+    _, err, status = run_script("upstream-v1.16.1", channel: "stable", checksums: checksums_for("v1.16.1"))
+    refute status.success?
+    assert_match(/the stable channel writes olk\.rb, not olk-next\.rb/, err)
+
+    _, err, status = run_script("v1.16.2-alpha.1", cask: @stable)
+    refute status.success?
+    assert_match(/the next channel writes olk-next\.rb, not olk\.rb/, err)
+  end
+
+  # The olk cask carried fork prereleases before the split; the first mirror
+  # is an ordinary upgrade from them.
+  def test_stable_upgrades_the_cask_from_the_last_fork_prerelease
+    File.write(@stable, %(cask "olk" do\n  version "1.15.2-alpha.2"\nend\n))
+    _, err, status = run_stable("upstream-v1.16.1")
+    assert status.success?, err
+    assert_match(/^  version "1\.16\.1"$/, File.read(@stable))
   end
 end

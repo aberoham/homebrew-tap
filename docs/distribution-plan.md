@@ -15,7 +15,8 @@ checksums. It does not contain the source repositories or build a combined relea
 | --- | --- | --- | --- | --- |
 | Teams | `aberoham/ms-teams-cli` (`upstream-vX.Y.Z`) | `Formula/teams-cli.rb` | `teams` | Upstream's stable releases, rebuilt from upstream's commit and signed |
 | Teams, next | `aberoham/ms-teams-cli` (`vX.Y.Z-alpha.N`) | `Formula/teams-cli-next.rb` | `teams` | My tested `next` integration builds |
-| Outlook | `aberoham/olkcli` | `Casks/olk.rb` | `olk` | My tested `next` integration builds |
+| Outlook | `aberoham/olkcli` (`upstream-vX.Y.Z`) | `Casks/olk.rb` | `olk` | Upstream's stable releases, rebuilt from upstream's commit and signed |
+| Outlook, next | `aberoham/olkcli` (`vX.Y.Z-alpha.N`) | `Casks/olk-next.rb` | `olk` | My tested `next` integration builds |
 | Entra | `aberoham/ms-entra-cli` | `Formula/entra.rb` | `entra` | My stable releases; optional prereleases |
 
 Teams and Entra formulas target macOS and Linux. Outlook initially keeps its
@@ -28,7 +29,7 @@ Fresh installs:
 
 ```sh
 brew install aberoham/tap/teams-cli        # or aberoham/tap/teams-cli-next
-brew install --cask aberoham/tap/olk
+brew install --cask aberoham/tap/olk       # or aberoham/tap/olk-next
 brew install aberoham/tap/entra
 ```
 
@@ -190,10 +191,14 @@ and the macOS archives in another, with publishing skipped in both. A third job
 signs and notarizes the macOS binaries, and a final job without Apple
 credentials writes `checksums.txt` over the signed archives and creates the
 GitHub prerelease with `gh release create`. GoReleaser therefore uploads no
-cask, and the fork holds no tap credential. The tap's `update-olk-cask.yml`
-writes `Casks/olk.rb` from the release's `checksums.txt` under the same rules as
-the Teams updater, and installs and runs the candidate on macOS Arm and Intel
-before committing. The existing Go module path stays, for version ldflags. npm
+cask, and the fork holds no tap credential. The fork's `mirror-upstream.yml`
+builds upstream's stable releases the same way, from upstream's commit with the
+fork's GoReleaser configs, as `upstream-vX.Y.Z`. The tap's `olk-cask.yml`,
+called by `update-olk-cask.yml` (stable, `Casks/olk.rb`) and
+`update-olk-next-cask.yml` (next, `Casks/olk-next.rb`), writes the cask from
+the release's `checksums.txt` under the same rules as the Teams updater,
+checks attestations as Teams does, and installs and runs the candidate on macOS
+Arm and Intel before committing. The existing Go module path stays, for version ldflags. npm
 and Model Context Protocol registry publishing stay off on the fork because its
 `PUBLISH_NPM` variable is unset.
 
@@ -235,7 +240,8 @@ optionally naming a tag:
     gh workflow run update-teams-next-formula.yml --repo aberoham/homebrew-tap -f tag=v0.8.1-alpha.1
 
 The Entra and Outlook updaters run the same way, at 09:47 UTC, from
-`update-entra-formula.yml` and `update-olk-cask.yml`.
+`update-entra-formula.yml` and `update-olk-cask.yml`; `update-olk-next-cask.yml`
+runs at 09:57 UTC.
 
 A public repository's scheduled workflows are disabled after 60 days without
 repository activity; GitHub's notice email is the prompt to re-enable them.
