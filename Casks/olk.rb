@@ -1,24 +1,26 @@
 cask "olk" do
-  version "1.15.2-alpha.2"
+  version "1.16.1"
 
   on_macos do
     on_arm do
-      sha256 "1fa7694c587268f90be5b1e3cd9794b2d5b75ea5b7d3a94c68a49607d4e7b0cb"
-      url "https://github.com/aberoham/olkcli/releases/download/v#{version}/olk_#{version}_darwin_arm64.tar.gz"
+      sha256 "4b07f51024a6f4dd04afb4d90b7bda49d66b6fedbe15c9c6725eb6eddd72d7c1"
+      url "https://github.com/aberoham/olkcli/releases/download/upstream-v#{version}/olk_#{version}_darwin_arm64.tar.gz"
     end
     on_intel do
-      sha256 "c512274531b40d521c9f2a4c4ba557488a826f4007cde8a151502643bbb2c57d"
-      url "https://github.com/aberoham/olkcli/releases/download/v#{version}/olk_#{version}_darwin_amd64.tar.gz"
+      sha256 "09c94d61c6071a64e1d37bc9cf38d80ea25c7c75fde0ac0a345ba76b6af90ea9"
+      url "https://github.com/aberoham/olkcli/releases/download/upstream-v#{version}/olk_#{version}_darwin_amd64.tar.gz"
     end
   end
 
   name "olk"
   desc "CLI for Microsoft Outlook via Microsoft Graph API"
-  homepage "https://github.com/aberoham/olkcli"
+  homepage "https://github.com/rlrghb/olkcli"
 
   livecheck do
-    skip "Updated by this tap's update-olk-cask workflow"
+    skip "Updated by this tap's olk-cask workflow"
   end
+
+  conflicts_with cask: "olk-next"
 
   binary "olk"
 end
