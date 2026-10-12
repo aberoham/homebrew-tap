@@ -9,21 +9,23 @@ This tap is independent of the upstream projects' official release channels.
 | --- | --- | --- |
 | Microsoft Teams | `aberoham/tap/teams-cli` | Switching to upstream [osodevops/ms-teams-cli](https://github.com/osodevops/ms-teams-cli) stable releases, rebuilt from upstream's source and signed, notarized and attested by [aberoham/ms-teams-cli](https://github.com/aberoham/ms-teams-cli); carries 0.7.1-alpha.3 until the first mirrored release is published |
 | Microsoft Teams, prereleases | `aberoham/tap/teams-cli-next` | Available; follows prereleases of [aberoham/ms-teams-cli](https://github.com/aberoham/ms-teams-cli) `next`. Conflicts with `teams-cli`: both install `teams` |
-| Microsoft Outlook (`olk`) | `aberoham/tap/olk` (macOS cask) | Available; follows prereleases of [aberoham/olkcli](https://github.com/aberoham/olkcli) `next` |
+| Microsoft Outlook (`olk`) | `aberoham/tap/olk` (macOS cask) | Switching to upstream [rlrghb/olkcli](https://github.com/rlrghb/olkcli) stable releases, rebuilt from upstream's source and signed, notarized and attested by [aberoham/olkcli](https://github.com/aberoham/olkcli); carries 1.15.2-alpha.2 until the first mirrored release is published |
+| Microsoft Outlook, prereleases | `aberoham/tap/olk-next` (macOS cask) | Available; follows prereleases of [aberoham/olkcli](https://github.com/aberoham/olkcli) `next`. Conflicts with `olk`: both install `olk` |
 | Microsoft Entra (`entra`) | `aberoham/tap/entra` | Available; follows stable releases of [aberoham/ms-entra-cli](https://github.com/aberoham/ms-entra-cli) |
 
-`teams-cli-next` and Outlook distribute my tested integration builds;
-`teams-cli` distributes upstream's releases, rebuilt from upstream's own source.
-Entra follows my own stable releases. Switch between the two Teams channels
-with `brew uninstall teams-cli && brew install aberoham/tap/teams-cli-next`,
-or the reverse. See the [distribution plan](docs/distribution-plan.md) for
+`teams-cli-next` and `olk-next` distribute my tested integration builds;
+`teams-cli` and `olk` distribute upstream's releases, rebuilt from upstream's
+own source. Entra follows my own stable releases. Switch channels with
+`brew uninstall teams-cli && brew install aberoham/tap/teams-cli-next`, or
+`brew uninstall --cask olk && brew install --cask aberoham/tap/olk-next`, or
+the reverse. See the [distribution plan](docs/distribution-plan.md) for
 packaging, versioning, upgrades and implementation status.
 
 ## Using this tap
 
 ```sh
 brew install aberoham/tap/teams-cli        # or aberoham/tap/teams-cli-next
-brew install --cask aberoham/tap/olk
+brew install --cask aberoham/tap/olk       # or aberoham/tap/olk-next
 brew install aberoham/tap/entra
 ```
 

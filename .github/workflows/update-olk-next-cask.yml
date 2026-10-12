@@ -1,0 +1,31 @@
+name: Update olk Next Cask
+run-name: Update olk-next ${{ inputs.tag || 'to the newest fork prerelease' }}
+
+# olk-next: the fork's own vX.Y.Z-alpha.N, -beta.N and -rc.N releases.
+on:
+  schedule:
+    # 09:57 UTC, Monday to Friday.
+    - cron: "57 9 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Fork prerelease tag to publish (default is the newest)
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: update-olk-next-cask
+  cancel-in-progress: false
+
+jobs:
+  cask:
+    name: olk-next
+    permissions:
+      contents: write # publish the cask to main
+      attestations: read # verify the archive's build provenance
+    uses: ./.github/workflows/olk-cask.yml
+    with:
+      channel: next
+      tag: ${{ inputs.tag }}

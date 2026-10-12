@@ -1,22 +1,31 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Writes Casks/olk.rb for one fork prerelease of olk. Set ALLOW_DOWNGRADE=true
-# to move the cask to a lower version, as a deliberate rollback does.
+# Writes one olk cask for one fork release of its channel; see olk_channel.rb
+# for the two channels. Set ALLOW_DOWNGRADE=true to move the cask to a lower
+# version, as a deliberate rollback does.
 
 require_relative "macos-release-policy"
+require_relative "olk_channel"
 
-tag, repository, checksums_path, cask_path = ARGV
+channel, tag, repository, checksums_path, cask_path = ARGV
 
-unless ARGV.length == 4
-  abort "usage: update-olk-cask.rb TAG REPOSITORY CHECKSUMS CASK"
+unless ARGV.length == 5
+  abort "usage: update-olk-cask.rb stable|next TAG REPOSITORY CHECKSUMS CASK"
 end
 
-# The fork channel carries prereleases only, so it can never shadow an
-# upstream stable release of the same number. Limiting the labels to alpha,
-# beta and rc keeps RubyGems' ordering, used below, identical to Homebrew's.
-unless tag.match?(/\Av\d+\.\d+\.\d+-(?:alpha|beta|rc)\.\d+\z/)
-  abort "invalid release tag: #{tag.inspect} (expected vX.Y.Z-alpha.N, -beta.N or -rc.N)"
+# The archives are named after the version the binary reports: upstream's tag
+# for a mirrored release, the release tag itself for a fork prerelease. A
+# channel writes only its own cask, so one channel's release can never land in
+# the other's.
+begin
+  version_tag = OlkChannel.version_tag(channel, tag)
+  cask_name = OlkChannel.cask(channel)
+rescue ArgumentError => e
+  abort e.message
+end
+unless File.basename(cask_path, ".rb") == cask_name
+  abort "the #{channel} channel writes #{cask_name}.rb, not #{File.basename(cask_path)}"
 end
 
 allowed_repos = %w[aberoham/olkcli]
@@ -31,7 +40,7 @@ checksums = File.foreach(checksums_path).to_h do |line|
   [filename, digest]
 end
 
-version = tag.delete_prefix("v")
+version = version_tag.delete_prefix("v")
 digests = %w[arm64 amd64].to_h do |arch|
   asset = "olk_#{version}_darwin_#{arch}.tar.gz"
   digest = checksums.fetch(asset) { abort "missing checksum for #{asset}" }
@@ -44,18 +53,25 @@ if File.exist?(cask_path)
   current_version = File.read(cask_path)[/^\s*version "([^"]+)"$/, 1]
   if current_version && ENV["ALLOW_DOWNGRADE"] != "true" &&
      Gem::Version.new(version) < Gem::Version.new(current_version)
-    abort "refusing to move olk from #{current_version} down to #{version} " \
+    abort "refusing to move #{cask_name} from #{current_version} down to #{version} " \
           "without ALLOW_DOWNGRADE=true"
   end
 end
 
-download = "https://github.com/#{repository}/releases/download/v\#{version}/olk_\#{version}"
+release = channel == "stable" ? "upstream-v\#{version}" : "v\#{version}"
+download = "https://github.com/#{repository}/releases/download/#{release}/olk_\#{version}"
+desc, homepage =
+  if channel == "stable"
+    ["CLI for Microsoft Outlook via Microsoft Graph API", "https://github.com/rlrghb/olkcli"]
+  else
+    ["CLI for Microsoft Outlook via Microsoft Graph API (fork prereleases)", "https://github.com/#{repository}"]
+  end
 
 # Preserve the legacy cask form for rollback. For cutover releases the hook
 # below is removed, and both macOS test jobs must verify the notarization
 # ticket before the publish job can commit the candidate.
 cask = <<~RUBY
-  cask "olk" do
+  cask "#{cask_name}" do
     version "#{version}"
 
     on_macos do
@@ -70,12 +86,14 @@ cask = <<~RUBY
     end
 
     name "olk"
-    desc "CLI for Microsoft Outlook via Microsoft Graph API"
-    homepage "https://github.com/#{repository}"
+    desc "#{desc}"
+    homepage "#{homepage}"
 
     livecheck do
-      skip "Updated by this tap's update-olk-cask workflow"
+      skip "Updated by this tap's olk-cask workflow"
     end
+
+    conflicts_with cask: "#{OlkChannel.other_cask(channel)}"
 
     binary "olk"
 
@@ -85,7 +103,7 @@ cask = <<~RUBY
   end
 RUBY
 
-if MacOSReleasePolicy.signed?("olk", tag)
+if MacOSReleasePolicy.signed?("olk", version_tag)
   cask = cask.sub(/\n  postflight_steps do\n.*?\n  end\n/m, "")
 end
 
