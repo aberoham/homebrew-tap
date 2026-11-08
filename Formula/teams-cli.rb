@@ -1,28 +1,28 @@
 class TeamsCli < Formula
   desc "Microsoft Teams CLI for AI agents and automation"
   homepage "http://msteamscli.com/"
-  version "0.9.0"
+  version "0.12.0"
   license "MIT"
 
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/upstream-v0.9.0/teams-v0.9.0-aarch64-apple-darwin.tar.gz"
-      sha256 "6ccae6006ec98e8eeb89a6b432281b5b25b93600198a3ad1f05a5c9deae73220"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/upstream-v0.12.0/teams-v0.12.0-aarch64-apple-darwin.tar.gz"
+      sha256 "8b172b9e1a4c9d2f6fe06562f0b54529e92a3f59640d50a5f65395e6ecb8b9b7"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/upstream-v0.9.0/teams-v0.9.0-x86_64-apple-darwin.tar.gz"
-      sha256 "39d48a693305469042e82b397b8c7174a110b3b16b5b45089297e774499376a9"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/upstream-v0.12.0/teams-v0.12.0-x86_64-apple-darwin.tar.gz"
+      sha256 "57324c998ae01b7ff6d16836622a9eed72cfd78f73a36c3e054bbb5081c65a80"
     end
   end
 
   if OS.linux?
     if Hardware::CPU.arm?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/upstream-v0.9.0/teams-v0.9.0-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "595f5d39ef2a00924cea15b1ec5fbb2bf6f2b796810ccea3fea0f66e31e6a590"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/upstream-v0.12.0/teams-v0.12.0-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "30afae9c5ff8530192d20111cc744be039e881d9d606bef7c376f3c2201deaee"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/aberoham/ms-teams-cli/releases/download/upstream-v0.9.0/teams-v0.9.0-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "2adcdb87d0737244750358b58bb2f4cc79caf342f45bf6ccb40932be57537636"
+      url "https://github.com/aberoham/ms-teams-cli/releases/download/upstream-v0.12.0/teams-v0.12.0-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "0c3d9b702a02fad37da600cce3feb970f534cd3fbf116139af6de57dbb489c01"
     end
   end
 
