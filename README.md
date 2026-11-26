@@ -12,6 +12,7 @@ This tap is independent of the upstream projects' official release channels.
 | Microsoft Outlook (`olk`) | `aberoham/tap/olk` (macOS cask) | Switching to upstream [rlrghb/olkcli](https://github.com/rlrghb/olkcli) stable releases, rebuilt from upstream's source and signed, notarized and attested by [aberoham/olkcli](https://github.com/aberoham/olkcli); carries 1.15.2-alpha.2 until the first mirrored release is published |
 | Microsoft Outlook, prereleases | `aberoham/tap/olk-next` (macOS cask) | Available; follows prereleases of [aberoham/olkcli](https://github.com/aberoham/olkcli) `next`. Conflicts with `olk`: both install `olk` |
 | Microsoft Entra (`entra`) | `aberoham/tap/entra` | Available; follows stable releases of [aberoham/ms-entra-cli](https://github.com/aberoham/ms-entra-cli) |
+| Microsoft Purview eDiscovery (`purview`) | `aberoham/tap/purview` | Follows stable releases of [aberoham/ms-purview-cli](https://github.com/aberoham/ms-purview-cli) from its first release |
 
 `teams-cli-next` and `olk-next` distribute my tested integration builds;
 `teams-cli` and `olk` distribute upstream's releases, rebuilt from upstream's
@@ -27,6 +28,7 @@ packaging, versioning, upgrades and implementation status.
 brew install aberoham/tap/teams-cli        # or aberoham/tap/teams-cli-next
 brew install --cask aberoham/tap/olk       # or aberoham/tap/olk-next
 brew install aberoham/tap/entra
+brew install aberoham/tap/purview
 ```
 
 Use fully qualified package names when selecting this tap; that also trusts the
