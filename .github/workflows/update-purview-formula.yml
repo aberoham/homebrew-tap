@@ -237,7 +237,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
-          persist-credentials: true # zizmor: ignore[artipacked] the push below needs it
+          persist-credentials: false
 
       # The candidate replaces the whole file, so publishing it over a formula
       # that changed after preparation would silently discard that change.
@@ -265,8 +265,11 @@ jobs:
           path: Formula
 
       - name: Commit and push
+      # The checkout keeps no credential. Only this step receives the token,
+      # as the same HTTP authorization header actions/checkout would set.
         env:
           TAG: ${{ needs.prepare.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -278,4 +281,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/purview.rb
           git commit -m "Update purview to ${TAG}"
-          git push origin HEAD:main
+          basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          echo "::add-mask::${basic}"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${basic}" \
+            push origin HEAD:main
