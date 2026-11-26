@@ -138,7 +138,9 @@ jobs:
           fi
           # A retest sends the unchanged formula through the install matrix;
           # the publish job then finds nothing to commit.
-          if [[ -z "$(git status --porcelain -- Formula/purview.rb)" && "$RETEST" != true ]]; then
+          # A standalone assignment, so a git failure stops the step.
+          formula_status="$(git status --porcelain -- Formula/purview.rb)"
+          if [[ -z "$formula_status" && "$RETEST" != true ]]; then
             echo "Formula already publishes ${TAG}"
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
@@ -274,7 +276,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "$(git status --porcelain -- Formula/purview.rb)" ]]; then
+          # A standalone assignment, so a git failure stops the step.
+          formula_status="$(git status --porcelain -- Formula/purview.rb)"
+          if [[ -z "$formula_status" ]]; then
             echo "Formula already publishes ${TAG}"
             exit 0
           fi
