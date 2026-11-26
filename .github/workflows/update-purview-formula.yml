@@ -284,5 +284,8 @@ jobs:
           git commit -m "Update purview to ${TAG}"
           basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
           echo "::add-mask::${basic}"
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${basic}" \
+          # The header reaches git through this command's environment, not
+          # its arguments, so it does not appear in the process list.
+          GH_PUSH_HEADER="AUTHORIZATION: basic ${basic}" \
+            git --config-env=http.https://github.com/.extraheader=GH_PUSH_HEADER \
             push origin HEAD:main
