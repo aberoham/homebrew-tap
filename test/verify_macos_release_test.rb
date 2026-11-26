@@ -26,7 +26,7 @@ class VerifyMacOSReleaseTest < Minitest::Test
 
   def test_cutovers_and_later_releases_require_identity
     MacOSReleasePolicy::CUTOVERS.each do |product, (version, _)|
-      ["v#{version}", "v99.0.0"].each do |tag|
+      ["v#{version || '0.0.0-alpha.1'}", "v99.0.0"].each do |tag|
         verify(product, tag)
         assert @commands.first.include?("--strict")
         requirement = @commands.first[@commands.first.index("-R") + 1]
@@ -44,9 +44,10 @@ class VerifyMacOSReleaseTest < Minitest::Test
     assert_raises(RuntimeError) { verify("teams", "v0.7.1-alpha.3", bad_command: "--check-notarization") }
   end
 
-  # Purview was signed from its first release, so no version skips the gate.
+  # Purview was signed from its first release, so no version skips the gate,
+  # including prereleases that RubyGems orders below 0.0.0.
   def test_every_purview_release_requires_identity
-    %w[v0.0.1 v0.1.0-alpha.1 v0.1.0].each do |tag|
+    %w[v0.0.0-alpha.1 v0.0.0-rc.1 v0.0.0 v0.0.1 v0.1.0-alpha.1 v0.1.0].each do |tag|
       verify("purview", tag)
       assert @commands.any? { |cmd| cmd.include?("--check-notarization") }, tag
     end
@@ -61,5 +62,6 @@ class VerifyMacOSReleaseTest < Minitest::Test
 
   def test_rejects_malformed_tags_instead_of_treating_them_as_legacy
     assert_raises(ArgumentError) { verify("olk", "v1.14.1-garbage.2") }
+    assert_raises(ArgumentError) { verify("purview", "v0.1.0-preview.1") }
   end
 end
