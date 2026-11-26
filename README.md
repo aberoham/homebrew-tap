@@ -31,6 +31,11 @@ brew install aberoham/tap/entra
 brew install aberoham/tap/purview
 ```
 
+`purview` arrives with the first release of
+[aberoham/ms-purview-cli](https://github.com/aberoham/ms-purview-cli). Until
+then the tap has no `Formula/purview.rb` and that install fails; the updater
+creates the formula when it publishes the first release.
+
 Use fully qualified package names when selecting this tap; that also trusts the
 one package under Homebrew's tap trust rules. Installing from here does not
 replace a tool already installed from another tap: uninstall that one first.

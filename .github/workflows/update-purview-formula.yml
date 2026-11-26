@@ -106,7 +106,16 @@ jobs:
         run: |
           set -euo pipefail
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          base="$(git rev-parse HEAD:Formula/purview.rb)"
+          # Before purview's first release, main has no formula. The first
+          # candidate starts from the fixture template and goes through the
+          # same install matrix as any later update.
+          if git cat-file -e HEAD:Formula/purview.rb 2>/dev/null; then
+            base="$(git rev-parse HEAD:Formula/purview.rb)"
+          else
+            base=absent
+            mkdir -p Formula
+            cp test/fixtures/purview-0.0.1.rb Formula/purview.rb
+          fi
           echo "base=${base}" >> "$GITHUB_OUTPUT"
           flags=()
           if [[ "$ALLOW_DOWNGRADE" == true ]]; then
@@ -116,10 +125,19 @@ jobs:
             "$TAG" "$RELEASE_REPOSITORY" "${RUNNER_TEMP}/checksums-sha256.txt" \
             Formula/purview.rb
           ruby -c Formula/purview.rb
-          git diff --check
+          # The updater rewrites every target block, so no placeholder from
+          # the template may survive into a candidate.
+          if grep -q '"0\{64\}"' Formula/purview.rb; then
+            echo "Formula/purview.rb still holds a placeholder checksum" >&2
+            exit 1
+          fi
+          # git diff sees only tracked files; a new formula is untracked.
+          if [[ "$base" != absent ]]; then
+            git diff --check
+          fi
           # A retest sends the unchanged formula through the install matrix;
           # the publish job then finds nothing to commit.
-          if git diff --quiet -- Formula/purview.rb && [[ "$RETEST" != true ]]; then
+          if [[ -z "$(git status --porcelain -- Formula/purview.rb)" && "$RETEST" != true ]]; then
             echo "Formula already publishes ${TAG}"
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
@@ -226,7 +244,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          current="$(git rev-parse HEAD:Formula/purview.rb)"
+          if git cat-file -e HEAD:Formula/purview.rb 2>/dev/null; then
+            current="$(git rev-parse HEAD:Formula/purview.rb)"
+          else
+            current=absent
+          fi
           if [[ "$current" != "$BASE" ]]; then
             echo "Formula/purview.rb on main changed after this run prepared its candidate." >&2
             echo "Re-run the workflow to build the candidate from the current formula." >&2
@@ -245,7 +267,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- Formula/purview.rb; then
+          if [[ -z "$(git status --porcelain -- Formula/purview.rb)" ]]; then
             echo "Formula already publishes ${TAG}"
             exit 0
           fi
