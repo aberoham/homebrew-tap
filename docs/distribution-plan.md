@@ -260,7 +260,10 @@ repository activity; GitHub's notice email is the prompt to re-enable them.
 4. Publish Entra's first stable release, then add `Formula/entra.rb` generated
    from that release's checksums. Never commit a formula whose download URLs
    point at a release that does not exist; `test/fixtures/entra-0.0.1.rb` is the
-   template, not a formula.
+   template, not a formula. Purview's updater instead creates
+   `Formula/purview.rb` from `test/fixtures/purview-0.0.1.rb` when main has
+   none, so the first release goes through the same install matrix as later
+   ones.
 5. Keep the three-tool status table current. Completion means all eligible tools
    install from this tap and upgrade to a subsequent release, not merely that the
    tap repository exists or an alpha tag was pushed.
