@@ -5,9 +5,10 @@ run-name: Update purview ${{ inputs.tag || 'to the newest stable release' }}
 # own token, so no other repository holds a credential that can write here.
 on:
   schedule:
-    # 09:57 UTC, Monday to Friday, ten minutes after the entra updater, so
-    # the two do not race to push to main. Run it by hand to publish sooner.
-    - cron: "57 9 * * 1-5"
+    # 10:07 UTC, Monday to Friday. The other updaters run between 09:17 and
+    # 09:57; a separate slot reduces the chance that two publish jobs push to
+    # main at the same time. Run it by hand to publish sooner.
+    - cron: "7 10 * * 1-5"
   workflow_dispatch:
     inputs:
       tag:
@@ -264,12 +265,12 @@ jobs:
           name: purview-formula
           path: Formula
 
-      - name: Commit and push
       # The checkout keeps no credential. Only this step receives the token,
       # as the same HTTP authorization header actions/checkout would set.
+      - name: Commit and push
         env:
-          TAG: ${{ needs.prepare.outputs.tag }}
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
         shell: bash
         run: |
           set -euo pipefail
