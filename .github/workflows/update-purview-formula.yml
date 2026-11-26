@@ -176,9 +176,11 @@ jobs:
           path: ${{ runner.temp }}/candidate
 
       # Homebrew installs formulae only from a tap, so the candidate goes into
-      # a throwaway local one. The test block runs `purview version` and
-      # `purview --help` and touches no Microsoft account.
-      - name: Install and test
+      # a throwaway local one. The archive is fetched and its provenance
+      # verified before Homebrew unpacks or installs it, and its signature is
+      # checked before anything runs it. The test block runs `purview version`
+      # and `purview --help` and touches no Microsoft account.
+      - name: Verify, install and test
         env:
           HOMEBREW_NO_AUTO_UPDATE: "1"
           HOMEBREW_NO_INSTALL_CLEANUP: "1"
@@ -198,16 +200,17 @@ jobs:
           if brew trust --help >/dev/null 2>&1; then
             brew trust --tap aberoham/candidate
           fi
-          brew install --formula aberoham/candidate/purview
+          # brew fetch checks the archive against the formula's checksum.
+          brew fetch --formula aberoham/candidate/purview
 
           # Every purview release carries a build provenance attestation from
-          # its release workflow, run on the tag. Check the archive Homebrew
-          # downloaded, after the formula's checksum has already matched it.
+          # its release workflow, run on the tag.
           archive="$(brew --cache --formula aberoham/candidate/purview)"
           gh attestation verify "$archive" --repo "$RELEASE_REPOSITORY" \
             --signer-workflow "${RELEASE_REPOSITORY}/.github/workflows/release.yml" \
             --source-ref "refs/tags/${TAG}"
 
+          brew install --formula aberoham/candidate/purview
           if [[ "$RUNNER_OS" == macOS ]]; then
             ruby scripts/verify-macos-release.rb purview "$TAG" "$(brew --prefix)/bin/purview"
           fi

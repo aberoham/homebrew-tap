@@ -34,6 +34,7 @@ archive before publishing, requiring the fork's `release.yml` as the signer;
 older fork prereleases remain installable for rollbacks without that check.
 
 Every `purview` release carries a build provenance attestation too. Its
-updater runs `gh attestation verify` on the archive Homebrew downloaded,
-requiring the source repository's `release.yml` as the signer and the release
-tag as the source ref, before it runs the binary.
+updater runs `brew fetch`, then `gh attestation verify` on the fetched
+archive, requiring the source repository's `release.yml` as the signer and the
+release tag as the source ref. Only then does it install the archive, check
+the macOS signature and run the binary.
