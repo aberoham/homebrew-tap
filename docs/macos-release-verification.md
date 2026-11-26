@@ -9,6 +9,7 @@ The required Team ID is `2VLHJGU477`; identifiers and inclusive cutovers are:
 | teams | com.aberoham.teams-cli | 0.7.1-alpha.3 |
 | entra | com.aberoham.entra | 0.1.1 |
 | olk | com.aberoham.olk | 1.14.1-alpha.2 |
+| purview | com.aberoham.purview | every release |
 
 Each release from its cutover also needs an online notarization ticket, checked with
 `codesign --verify --strict --check-notarization`. A network failure or missing
@@ -31,3 +32,8 @@ what the binary reports. Every mirrored `teams-cli` release, and every
 attestation. The test jobs run `gh attestation verify` on the downloaded
 archive before publishing, requiring the fork's `release.yml` as the signer;
 older fork prereleases remain installable for rollbacks without that check.
+
+Every `purview` release carries a build provenance attestation too. Its
+updater runs `gh attestation verify` on the archive Homebrew downloaded,
+requiring the source repository's `release.yml` as the signer and the release
+tag as the source ref, before it runs the binary.

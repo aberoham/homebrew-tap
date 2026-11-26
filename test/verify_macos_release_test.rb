@@ -40,7 +40,16 @@ class VerifyMacOSReleaseTest < Minitest::Test
     assert_raises(RuntimeError) { verify("teams", "v0.7.1-alpha.3", bad_command: "--verify") }
     assert_raises(RuntimeError) { verify("olk", "v1.14.1-alpha.2", bad_command: "--check-notarization") }
     assert_raises(RuntimeError) { verify("entra", "v0.1.1", bad_command: "--check-notarization") }
+    assert_raises(RuntimeError) { verify("purview", "v0.1.0-rc.1", bad_command: "--check-notarization") }
     assert_raises(RuntimeError) { verify("teams", "v0.7.1-alpha.3", bad_command: "--check-notarization") }
+  end
+
+  # Purview was signed from its first release, so no version skips the gate.
+  def test_every_purview_release_requires_identity
+    %w[v0.0.1 v0.1.0-alpha.1 v0.1.0].each do |tag|
+      verify("purview", tag)
+      assert @commands.any? { |cmd| cmd.include?("--check-notarization") }, tag
+    end
   end
 
   def test_rejects_wrong_team_and_identifier

@@ -6,6 +6,8 @@ module MacOSReleasePolicy
     "teams" => ["0.7.1-alpha.3", "com.aberoham.teams-cli"],
     "entra" => ["0.1.1", "com.aberoham.entra"],
     "olk" => ["1.14.1-alpha.2", "com.aberoham.olk"],
+    # Signed from its first release, so every version, prereleases included.
+    "purview" => ["0.0.0", "com.aberoham.purview"],
   }.freeze
 
   def self.signed?(product, tag)
