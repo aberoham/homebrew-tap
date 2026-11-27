@@ -2,27 +2,27 @@ class Purview < Formula
   desc "Microsoft Purview eDiscovery (Premium) searches and exports from the command line"
   homepage "https://github.com/aberoham/ms-purview-cli"
   license "MIT"
-  version "0.1.0-rc.1"
+  version "0.1.0"
 
   on_macos do
     on_arm do
-      url "https://github.com/aberoham/ms-purview-cli/releases/download/v0.1.0-rc.1/purview-v0.1.0-rc.1-aarch64-apple-darwin.tar.gz"
-      sha256 "56e0558520c1472a42fd07bd990a73864d37d6693c361932f62f207072e690ab"
+      url "https://github.com/aberoham/ms-purview-cli/releases/download/v0.1.0/purview-v0.1.0-aarch64-apple-darwin.tar.gz"
+      sha256 "2e0b67db2cbddc5dddab6f17fdecbb5d1e5ee81a751f73d3b83df54fa474ea21"
     end
     on_intel do
-      url "https://github.com/aberoham/ms-purview-cli/releases/download/v0.1.0-rc.1/purview-v0.1.0-rc.1-x86_64-apple-darwin.tar.gz"
-      sha256 "7a614abf78812287759c369d1ff46932ebd6a0c337c35348e1d1dfc3f27a5819"
+      url "https://github.com/aberoham/ms-purview-cli/releases/download/v0.1.0/purview-v0.1.0-x86_64-apple-darwin.tar.gz"
+      sha256 "25ae9da22bbcc1aad774a8e1e0b15644b2aa7a424c2250c45a938d9bdd4c5eee"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/aberoham/ms-purview-cli/releases/download/v0.1.0-rc.1/purview-v0.1.0-rc.1-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "3061b5212b2d36c96873ecd9155a179f525024137abace0c5ad8d4cc8090054f"
+      url "https://github.com/aberoham/ms-purview-cli/releases/download/v0.1.0/purview-v0.1.0-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "388b326db7af64f5811b454eee9ead5503aecc21bde7fae4e543ecc392c43638"
     end
     on_intel do
-      url "https://github.com/aberoham/ms-purview-cli/releases/download/v0.1.0-rc.1/purview-v0.1.0-rc.1-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "508a66feea6ee369962e0d02c8405410db1e8d735f81d9549c092d4589d1b3e8"
+      url "https://github.com/aberoham/ms-purview-cli/releases/download/v0.1.0/purview-v0.1.0-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "e9f3d8971e0aa059f7d8376bb3837cba21c6bc1cfda799ad83fccd82dddc60b0"
     end
   end
 
